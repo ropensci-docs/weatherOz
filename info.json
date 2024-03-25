@@ -1,0 +1,12 @@
+{
+  "commit": {
+    "commit": "b82c41c053884447c1801bf579cc2b4ddb3074fe",
+    "author": "Adam H. Sparks <adam.sparks@curtin.edu.au>",
+    "time": "2024-03-25 03:48:06",
+    "files": 2,
+    "merge": false,
+    "message": "add cran-comments.md for first submission\n"
+  },
+  "repo": "https://github.com/ropensci/weatherOz",
+  "pkg": "weatherOz"
+}
