@@ -1,0 +1,716 @@
+# weatherOz for BOM
+
+## Using {weatherOz} With BOM Data
+
+Several functions are provided by {weatherOz} to retrieve Australian
+Bureau of Meteorology (BOM) data. A family of functions retrieve data
+files from BOM or parse local files from BOM and return data frames;
+
+- [`get_precis_forecast()`](https://docs.ropensci.org/weatherOz/reference/get_precis_forecast.md)
+  and
+  [`parse_precis_forecast()`](https://docs.ropensci.org/weatherOz/reference/parse_precis_forecast.md),
+  which return the précis (short) forecast;
+- agricultural bulletin functions `get_ag_bulletin()` and
+  `parse_ag_bulletin()` were defunct in v2.x and removed in v3.0.0 after
+  BOM discontinued the service;
+- [`get_coastal_forecast()`](https://docs.ropensci.org/weatherOz/reference/get_coastal_forecast.md)
+  and
+  [`parse_coastal_forecast()`](https://docs.ropensci.org/weatherOz/reference/parse_coastal_forecast.md),
+  which return coastal waters forecasts for each state.
+
+### Using get_precis_forecast()
+
+This function only takes one argument, `state`. The `state` parameter
+allows the user to select the forecast for just one state or a national
+forecast. States or territories are specified using the official postal
+codes or full name with fuzzy matching performed via
+[`agrep()`](https://rdrr.io/r/base/agrep.html).
+
+- **ACT** - Australian Capital Territory
+
+- **NSW** - New South Wales
+
+- **NT** - Northern Territory
+
+- **QLD** - Queensland
+
+- **SA** - South Australia
+
+- **TAS** - Tasmania
+
+- **VIC** - Victoria
+
+- **WA** - Western Australia
+
+- **AUS** - Australia, returns national forecast including all states,
+  NT and ACT.
+
+#### Results
+
+The function,
+[`get_precis_forecast()`](https://docs.ropensci.org/weatherOz/reference/get_precis_forecast.md),
+will return a data frame of the weather forecast for the daily forecast
+for selected towns. See Appendix 1 for a full description of the fields
+and values.
+
+#### Example 1: Getting a Forecast
+
+Following is an example fetching the forecast for Queensland.
+
+``` r
+
+library(weatherOz)
+#> 
+#> Attaching package: 'weatherOz'
+#> The following object is masked from 'package:graphics':
+#> 
+#>     plot
+#> The following object is masked from 'package:base':
+#> 
+#>     plot
+(QLD_forecast <- get_precis_forecast(state = "QLD"))
+#>   -----------  Australian Bureau of Meteorology (BOM) Precis Forecast. -
+#>   The HTML version of Short Form (Precis) Forecast for 
+#>   QLD can be found at:
+#>   <http://www.bom.gov.au/qld/forecasts/state.shtml>
+#>   Please note information at the page 
+#>   <http://www.bom.gov.au/catalogue/data-feeds.shtml#precis>.
+#>   --------------------------------------------------------------------------------  
+#>       index product_id  state         town       aac       lat      lon  elev
+#>      <fctr>     <char> <char>       <char>    <char>     <num>    <num> <num>
+#>   1:      0   IDQ11295    QLD     Brisbane QLD_PT001 -27.48080 153.0389   8.1
+#>   2:      1   IDQ11295    QLD     Brisbane QLD_PT001 -27.48080 153.0389   8.1
+#>   3:      2   IDQ11295    QLD     Brisbane QLD_PT001 -27.48080 153.0389   8.1
+#>   4:      3   IDQ11295    QLD     Brisbane QLD_PT001 -27.48080 153.0389   8.1
+#>   5:      4   IDQ11295    QLD     Brisbane QLD_PT001 -27.48080 153.0389   8.1
+#>  ---                                                                         
+#> 787:      2   IDQ11295    QLD Port Douglas QLD_PT254 -16.48681 145.4635  70.4
+#> 788:      3   IDQ11295    QLD Port Douglas QLD_PT254 -16.48681 145.4635  70.4
+#> 789:      4   IDQ11295    QLD Port Douglas QLD_PT254 -16.48681 145.4635  70.4
+#> 790:      5   IDQ11295    QLD Port Douglas QLD_PT254 -16.48681 145.4635  70.4
+#> 791:      6   IDQ11295    QLD Port Douglas QLD_PT254 -16.48681 145.4635  70.4
+#>         start_time_local end_time_local utc_offset      start_time_utc
+#>                   <POSc>         <POSc>     <fctr>              <POSc>
+#>   1: 2026-04-08 09:00:00     2026-04-09      10:00 2026-04-07 23:00:00
+#>   2: 2026-04-09 00:00:00     2026-04-10      10:00 2026-04-08 14:00:00
+#>   3: 2026-04-10 00:00:00     2026-04-11      10:00 2026-04-09 14:00:00
+#>   4: 2026-04-11 00:00:00     2026-04-12      10:00 2026-04-10 14:00:00
+#>   5: 2026-04-12 00:00:00     2026-04-13      10:00 2026-04-11 14:00:00
+#>  ---                                                                  
+#> 787: 2026-04-10 00:00:00     2026-04-11      10:00 2026-04-09 14:00:00
+#> 788: 2026-04-11 00:00:00     2026-04-12      10:00 2026-04-10 14:00:00
+#> 789: 2026-04-12 00:00:00     2026-04-13      10:00 2026-04-11 14:00:00
+#> 790: 2026-04-13 00:00:00     2026-04-14      10:00 2026-04-12 14:00:00
+#> 791: 2026-04-14 00:00:00     2026-04-15      10:00 2026-04-13 14:00:00
+#>             end_time_utc minimum_temperature maximum_temperature
+#>                   <POSc>               <num>               <num>
+#>   1: 2026-04-08 14:00:00                  NA                  32
+#>   2: 2026-04-09 14:00:00                  20                  30
+#>   3: 2026-04-10 14:00:00                  20                  30
+#>   4: 2026-04-11 14:00:00                  19                  32
+#>   5: 2026-04-12 14:00:00                  20                  32
+#>  ---                                                            
+#> 787: 2026-04-10 14:00:00                  21                  29
+#> 788: 2026-04-11 14:00:00                  21                  29
+#> 789: 2026-04-12 14:00:00                  21                  30
+#> 790: 2026-04-13 14:00:00                  22                  29
+#> 791: 2026-04-14 14:00:00                  23                  28
+#>      lower_precipitation_limit upper_precipitation_limit           precis
+#>                          <num>                     <num>           <char>
+#>   1:                        NA                        NA           Sunny.
+#>   2:                        NA                        NA    Mostly sunny.
+#>   3:                        NA                        NA   Partly cloudy.
+#>   4:                        NA                        NA           Sunny.
+#>   5:                        NA                        NA    Mostly sunny.
+#>  ---                                                                     
+#> 787:                         0                         1 Possible shower.
+#> 788:                        NA                        NA   Partly cloudy.
+#> 789:                        NA                        NA   Partly cloudy.
+#> 790:                         0                        10   Shower or two.
+#> 791:                         1                        35         Showers.
+#>      probability_of_precipitation
+#>                             <num>
+#>   1:                            5
+#>   2:                            5
+#>   3:                            5
+#>   4:                            5
+#>   5:                           20
+#>  ---                             
+#> 787:                           40
+#> 788:                           20
+#> 789:                           20
+#> 790:                           60
+#> 791:                           80
+```
+
+### Using get_coastal_forecast()
+
+This function only takes one argument, `state`. The `state` parameter
+allows the user to select the forecast for just one state or a national
+forecast. States or territories are specified using the official postal
+codes or full name with fuzzy matching performed via
+[`agrep()`](https://rdrr.io/r/base/agrep.html)
+
+- **ACT** - Australian Capital Territory
+
+- **NSW** - New South Wales
+
+- **NT** - Northern Territory
+
+- **QLD** - Queensland
+
+- **SA** - South Australia
+
+- **TAS** - Tasmania
+
+- **VIC** - Victoria
+
+- **WA** - Western Australia
+
+- **AUS** - Australia, returns national forecast including all states,
+  NT and ACT.
+
+#### Results
+
+The function,
+[`get_coastal_forecast()`](https://docs.ropensci.org/weatherOz/reference/get_coastal_forecast.md),
+will return a data frame of the coastal waters forecast for marine zones
+in each state. See Appendix 6 for a full description of the fields and
+values.
+
+#### Example 2: Getting a Coastal Forecast
+
+Following is an example fetching the forecast for Queensland.
+
+``` r
+
+library(weatherOz)
+(QLD_coastal_forecast <- get_coastal_forecast(state = "QLD"))
+#>   -------  Australian Bureau of Meteorology (BOM) Coastal Waters Forecast. -------
+#>   Please note information at the foot of
+#>   <http://www.bom.gov.au/cgi-bin/wrap_fwo.pl?IDQ11290.html>,
+#>   the HTML version of Coastal Waters Forecast for 
+#>   QLD.
+#>   Also see 
+#>   <http://www.bom.gov.au/catalogue/observations/about-coastal-observations.shtml>.
+#>   --------------------------------------------------------------------------------  
+#>      index product_id   type state_code
+#>     <fctr>     <char> <char>     <char>
+#>  1:   <NA>   IDQ11290   <NA>        QLD
+#>  2:   <NA>   IDQ11290   <NA>        QLD
+#>  3:   <NA>   IDQ11290   <NA>        QLD
+#>  4:   <NA>   IDQ11290   <NA>        QLD
+#>  5:      0   IDQ11290   <NA>        QLD
+#> ---                                    
+#> 45:      1   IDQ11290   <NA>        QLD
+#> 46:      2   IDQ11290   <NA>        QLD
+#> 47:      0   IDQ11290   <NA>        QLD
+#> 48:      1   IDQ11290   <NA>        QLD
+#> 49:      2   IDQ11290   <NA>        QLD
+#>                                                          dist_name pt_1_name
+#>                                                             <char>    <char>
+#>  1:                                                     Queensland      <NA>
+#>  2:                                 Queensland Gulf of Carpentaria      <NA>
+#>  3:                                               North Queensland      <NA>
+#>  4:                                               South Queensland      <NA>
+#>  5: South East Gulf of Carpentaria: QLD-NT Border to Cape Keerweer      <NA>
+#> ---                                                                         
+#> 45:                Gold Coast Waters: Cape Moreton to Point Danger      <NA>
+#> 46:                Gold Coast Waters: Cape Moreton to Point Danger      <NA>
+#> 47:                             Great Barrier Reef Offshore Waters      <NA>
+#> 48:                             Great Barrier Reef Offshore Waters      <NA>
+#> 49:                             Great Barrier Reef Offshore Waters      <NA>
+#>     pt_2_name       aac    start_time_local      end_time_local utc_offset
+#>        <char>    <char>              <POSc>              <POSc>     <fctr>
+#>  1:      <NA> QLD_FA001 2026-04-08 09:21:48 2026-04-08 09:21:48      10:00
+#>  2:      <NA> QLD_FA002 2026-04-08 05:00:00 2026-04-08 05:00:00      10:00
+#>  3:      <NA> QLD_FA003 2026-04-08 05:00:00 2026-04-08 05:00:00      10:00
+#>  4:      <NA> QLD_FA004 2026-04-08 05:00:00 2026-04-08 05:00:00      10:00
+#>  5:      <NA> QLD_MW001 2026-04-08 09:00:00 2026-04-08 09:00:00      10:00
+#> ---                                                                       
+#> 45:      <NA> QLD_MW014 2026-04-09 00:00:00 2026-04-09 00:00:00      10:00
+#> 46:      <NA> QLD_MW014 2026-04-10 00:00:00 2026-04-10 00:00:00      10:00
+#> 47:      <NA> QLD_MW015 2026-04-08 09:00:00 2026-04-08 09:00:00      10:00
+#> 48:      <NA> QLD_MW015 2026-04-09 00:00:00 2026-04-09 00:00:00      10:00
+#> 49:      <NA> QLD_MW015 2026-04-10 00:00:00 2026-04-10 00:00:00      10:00
+#>          start_time_utc        end_time_utc
+#>                  <POSc>              <POSc>
+#>  1: 2026-04-08 09:21:48 2026-04-08 09:21:48
+#>  2: 2026-04-08 05:00:00 2026-04-08 05:00:00
+#>  3: 2026-04-08 05:00:00 2026-04-08 05:00:00
+#>  4: 2026-04-08 05:00:00 2026-04-08 05:00:00
+#>  5: 2026-04-08 09:00:00 2026-04-08 09:00:00
+#> ---                                        
+#> 45: 2026-04-09 00:00:00 2026-04-09 00:00:00
+#> 46: 2026-04-10 00:00:00 2026-04-10 00:00:00
+#> 47: 2026-04-08 09:00:00 2026-04-08 09:00:00
+#> 48: 2026-04-09 00:00:00 2026-04-09 00:00:00
+#> 49: 2026-04-10 00:00:00 2026-04-10 00:00:00
+#>                                                         forecast_seas
+#>                                                                <char>
+#>  1:                                                              <NA>
+#>  2:                                                              <NA>
+#>  3:                                                              <NA>
+#>  4:                                                              <NA>
+#>  5:                                                    Below 1 metre.
+#> ---                                                                  
+#> 45:                                                    Below 1 metre.
+#> 46:                                                    Below 1 metre.
+#> 47: 1 to 1.5 metres, increasing to 1 to 2 metres north of Creal Reef.
+#> 48: 1 to 1.5 metres, increasing to 1 to 2 metres north of Creal Reef.
+#> 49:                                                  1 to 1.5 metres.
+#>     forecast_weather
+#>               <char>
+#>  1:             <NA>
+#>  2:             <NA>
+#>  3:             <NA>
+#>  4:             <NA>
+#>  5:           Sunny.
+#> ---                 
+#> 45:    Mostly sunny.
+#> 46:    Mostly sunny.
+#> 47:    Mostly sunny.
+#> 48:   Partly cloudy.
+#> 49:   Partly cloudy.
+#>                                                                                                                                                     forecast_winds
+#>                                                                                                                                                             <char>
+#>  1:                                                                                                                                                           <NA>
+#>  2:                                                                                                                                                           <NA>
+#>  3:                                                                                                                                                           <NA>
+#>  4:                                                                                                                                                           <NA>
+#>  5:                                                                          East to southeasterly 10 to 15 knots becoming variable about 10 knots in the evening.
+#> ---                                                                                                                                                               
+#> 45: North to northeasterly 10 to 15 knots becoming variable about 10 knots in the early morning then becoming northeasterly 10 to 15 knots in the early afternoon.
+#> 46:                                                                                             Northeasterly 10 to 15 knots turning northerly during the evening.
+#> 47:                                                    Southeasterly 15 to 20 knots, reaching up to 25 knots north of Creal Reef during the afternoon and evening.
+#> 48:                                                                                                                                  Southeasterly 15 to 25 knots.
+#> 49:                                                                                                                                  Southeasterly 15 to 20 knots.
+#>                                                                           forecast_swell1
+#>                                                                                    <char>
+#>  1:                                                                                  <NA>
+#>  2:                                                                                  <NA>
+#>  3:                                                                                  <NA>
+#>  4:                                                                                  <NA>
+#>  5:                                                                     Below 0.5 metres.
+#> ---                                                                                      
+#> 45:              Easterly around 1 metre inshore, increasing to 1 to 1.5 metres offshore.
+#> 46:           Easterly 1 to 1.5 metres, increasing to 1.5 to 2 metres during the morning.
+#> 47: Easterly around 1 metre, increasing to 1 to 1.5 metres through the Capricorn Channel.
+#> 48:                                                             Easterly 1 to 1.5 metres.
+#> 49:       Easterly 1 to 2 metres, tending northeasterly 1 to 2 metres during the evening.
+#>     forecast_swell2 forecast_caution marine_forecast tropical_system_location
+#>              <char>           <char>          <char>                   <lgcl>
+#>  1:            <NA>             <NA>            <NA>                       NA
+#>  2:            <NA>             <NA>            <NA>                       NA
+#>  3:            <NA>             <NA>            <NA>                       NA
+#>  4:            <NA>             <NA>            <NA>                       NA
+#>  5:            <NA>             <NA>            <NA>                       NA
+#> ---                                                                          
+#> 45:            <NA>             <NA>            <NA>                       NA
+#> 46:            <NA>             <NA>            <NA>                       NA
+#> 47:            <NA>             <NA>            <NA>                       NA
+#> 48:            <NA>             <NA>            <NA>                       NA
+#> 49:            <NA>             <NA>            <NA>                       NA
+#>     forecast_waves
+#>             <lgcl>
+#>  1:             NA
+#>  2:             NA
+#>  3:             NA
+#>  4:             NA
+#>  5:             NA
+#> ---               
+#> 45:             NA
+#> 46:             NA
+#> 47:             NA
+#> 48:             NA
+#> 49:             NA
+```
+
+### Working with BOM Image Files
+
+A second family of functions retrieve information pertaining to
+satellite and radar imagery.
+
+- [`get_available_imagery()`](https://docs.ropensci.org/weatherOz/reference/get_available_imagery.md),
+  which returns available satellite imagery;
+- `get_satelllite_imagery()` which returns a \[terra::SpatRaster\] or
+  \[stars\] object as requested;
+- [`get_available_radar()`](https://docs.ropensci.org/weatherOz/reference/get_available_radar.md),
+  which returns available radar images; and
+- [`get_radar_imagery()`](https://docs.ropensci.org/weatherOz/reference/get_radar_imagery.md)
+  which returns radar images as a \[magick\] object.
+
+#### Using {weatherOz} to retrieve BOM satellite imagery
+
+{weatherOz} provides functionality to retrieve high-definition GeoTIFF
+satellite imagery provided by BOM through public FTP with the following
+types of imagery being available: i.) [Infrared
+images](https://www.bom.gov.au/resources/learn-and-explore/radar-and-equipment-knowledge-centre),
+ii.) [Visible
+images](https://www.bom.gov.au/resources/learn-and-explore/radar-and-equipment-knowledge-centre)
+and iii.) [Clouds/surface
+composite](https://www.bom.gov.au/resources/learn-and-explore/radar-and-equipment-knowledge-centre).
+
+##### Working with Satellite Imagery
+
+Valid BOM satellite Product IDs for GeoTIFF files include:
+
+| Product ID | Description | Type | Delete time |
+|----|----|----|:--:|
+| IDE00420 | AHI cloud cover only 2km FD GEOS | Satellite | 24 |
+| IDE00421 | AHI IR (Ch13) greyscale 2km FD GEOS | Satellite | 24 |
+| IDE00422 | AHI VIS (Ch3) greyscale 2km FD GEOS | Satellite | 24 |
+| IDE00423 | AHI IR (Ch13) Zehr 2km FD GEOS | Satellite | 24 |
+| IDE00425 | AHI VIS (true colour) / IR (Ch13 greyscale) composite 1km FD GEOS | Satellite | 24 |
+| IDE00426 | AHI VIS (true colour) / IR (Ch13 greyscale) composite 2km FD GEOS | Satellite | 24 |
+| IDE00427 | AHI WV (Ch8) 2km FD GEOS | Satellite | 24 |
+| IDE00430 | AHI cloud cover only 2km AUS equirect. | Satellite | 24 |
+| IDE00431 | AHI IR (Ch13) greyscale 2km AUS equirect. | Satellite | 24 |
+| IDE00432 | AHI VIS (Ch3) greyscale 2km AUS equirect. | Satellite | 24 |
+| IDE00433 | AHI IR (Ch13) Zehr 2km AUS equirect. | Satellite | 24 |
+| IDE00435 | AHI VIS (true colour) / IR (Ch13 greyscale) composite 1km AUS equirect. | Satellite | 24 |
+| IDE00436 | AHI VIS (true colour) / IR (Ch13 greyscale) composite 2km AUS equirect. | Satellite | 24 |
+| IDE00437 | AHI WV (Ch8) 2km AUS equirect. | Satellite | 24 |
+| IDE00439 | AHI VIS (Ch3) greyscale 0.5km AUS equirect. | Satellite | 24 |
+| **Information gathered from Australian Bureau of Meteorology (BOM)** |  |  |  |
+
+##### Using get_available_imagery()
+
+[`get_available_imagery()`](https://docs.ropensci.org/weatherOz/reference/get_available_imagery.md)
+only takes one argument, `product_id`, a BOM identifier for the imagery
+that you wish to check for available imagery. Using this function will
+fetch a listing of BOM GeoTIFF satellite imagery from
+<ftp://ftp.bom.gov.au/anon/gen/gms/> to display which files are
+currently available for download. These files are available at ten
+minute update frequency with a 24 hour delete time. This function can be
+used see the most recent files available and then specify in the
+`_imagery()` function. If no valid Product ID is supplied, defaults to
+all GeoTIFF images currently available.
+
+##### Example 3: Checking Available Imagery
+
+``` r
+
+library(weatherOz)
+
+(avail <- get_available_imagery(product_id = "IDE00425"))
+#>   [1] "IDE00425.202604070010.tif" "IDE00425.202604070020.tif"
+#>   [3] "IDE00425.202604070030.tif" "IDE00425.202604070040.tif"
+#>   [5] "IDE00425.202604070050.tif" "IDE00425.202604070100.tif"
+#>   [7] "IDE00425.202604070110.tif" "IDE00425.202604070120.tif"
+#>   [9] "IDE00425.202604070130.tif" "IDE00425.202604070140.tif"
+#>  [11] "IDE00425.202604070150.tif" "IDE00425.202604070200.tif"
+#>  [13] "IDE00425.202604070210.tif" "IDE00425.202604070220.tif"
+#>  [15] "IDE00425.202604070230.tif" "IDE00425.202604070250.tif"
+#>  [17] "IDE00425.202604070300.tif" "IDE00425.202604070310.tif"
+#>  [19] "IDE00425.202604070320.tif" "IDE00425.202604070330.tif"
+#>  [21] "IDE00425.202604070340.tif" "IDE00425.202604070350.tif"
+#>  [23] "IDE00425.202604070400.tif" "IDE00425.202604070410.tif"
+#>  [25] "IDE00425.202604070420.tif" "IDE00425.202604070430.tif"
+#>  [27] "IDE00425.202604070440.tif" "IDE00425.202604070450.tif"
+#>  [29] "IDE00425.202604070500.tif" "IDE00425.202604070510.tif"
+#>  [31] "IDE00425.202604070520.tif" "IDE00425.202604070530.tif"
+#>  [33] "IDE00425.202604070540.tif" "IDE00425.202604070550.tif"
+#>  [35] "IDE00425.202604070600.tif" "IDE00425.202604070610.tif"
+#>  [37] "IDE00425.202604070620.tif" "IDE00425.202604070630.tif"
+#>  [39] "IDE00425.202604070640.tif" "IDE00425.202604070650.tif"
+#>  [41] "IDE00425.202604070700.tif" "IDE00425.202604070710.tif"
+#>  [43] "IDE00425.202604070720.tif" "IDE00425.202604070730.tif"
+#>  [45] "IDE00425.202604070740.tif" "IDE00425.202604070750.tif"
+#>  [47] "IDE00425.202604070800.tif" "IDE00425.202604070810.tif"
+#>  [49] "IDE00425.202604070820.tif" "IDE00425.202604070830.tif"
+#>  [51] "IDE00425.202604070840.tif" "IDE00425.202604070850.tif"
+#>  [53] "IDE00425.202604070900.tif" "IDE00425.202604070910.tif"
+#>  [55] "IDE00425.202604070920.tif" "IDE00425.202604070930.tif"
+#>  [57] "IDE00425.202604070940.tif" "IDE00425.202604070950.tif"
+#>  [59] "IDE00425.202604071000.tif" "IDE00425.202604071010.tif"
+#>  [61] "IDE00425.202604071020.tif" "IDE00425.202604071030.tif"
+#>  [63] "IDE00425.202604071040.tif" "IDE00425.202604071050.tif"
+#>  [65] "IDE00425.202604071100.tif" "IDE00425.202604071110.tif"
+#>  [67] "IDE00425.202604071120.tif" "IDE00425.202604071130.tif"
+#>  [69] "IDE00425.202604071140.tif" "IDE00425.202604071150.tif"
+#>  [71] "IDE00425.202604071200.tif" "IDE00425.202604071210.tif"
+#>  [73] "IDE00425.202604071220.tif" "IDE00425.202604071230.tif"
+#>  [75] "IDE00425.202604071240.tif" "IDE00425.202604071250.tif"
+#>  [77] "IDE00425.202604071300.tif" "IDE00425.202604071310.tif"
+#>  [79] "IDE00425.202604071320.tif" "IDE00425.202604071330.tif"
+#>  [81] "IDE00425.202604071340.tif" "IDE00425.202604071350.tif"
+#>  [83] "IDE00425.202604071400.tif" "IDE00425.202604071410.tif"
+#>  [85] "IDE00425.202604071420.tif" "IDE00425.202604071430.tif"
+#>  [87] "IDE00425.202604071450.tif" "IDE00425.202604071500.tif"
+#>  [89] "IDE00425.202604071510.tif" "IDE00425.202604071520.tif"
+#>  [91] "IDE00425.202604071530.tif" "IDE00425.202604071540.tif"
+#>  [93] "IDE00425.202604071550.tif" "IDE00425.202604071600.tif"
+#>  [95] "IDE00425.202604071610.tif" "IDE00425.202604071620.tif"
+#>  [97] "IDE00425.202604071630.tif" "IDE00425.202604071640.tif"
+#>  [99] "IDE00425.202604071650.tif" "IDE00425.202604071700.tif"
+#> [101] "IDE00425.202604071710.tif" "IDE00425.202604071720.tif"
+#> [103] "IDE00425.202604071730.tif" "IDE00425.202604071740.tif"
+#> [105] "IDE00425.202604071750.tif" "IDE00425.202604071800.tif"
+#> [107] "IDE00425.202604071810.tif" "IDE00425.202604071820.tif"
+#> [109] "IDE00425.202604071830.tif" "IDE00425.202604071840.tif"
+#> [111] "IDE00425.202604071850.tif" "IDE00425.202604071900.tif"
+#> [113] "IDE00425.202604071910.tif" "IDE00425.202604071920.tif"
+#> [115] "IDE00425.202604071930.tif" "IDE00425.202604071940.tif"
+#> [117] "IDE00425.202604071950.tif" "IDE00425.202604072000.tif"
+#> [119] "IDE00425.202604072010.tif" "IDE00425.202604072020.tif"
+#> [121] "IDE00425.202604072030.tif" "IDE00425.202604072050.tif"
+#> [123] "IDE00425.202604072100.tif" "IDE00425.202604072110.tif"
+#> [125] "IDE00425.202604072120.tif" "IDE00425.202604072130.tif"
+#> [127] "IDE00425.202604072140.tif" "IDE00425.202604072150.tif"
+#> [129] "IDE00425.202604072200.tif" "IDE00425.202604072210.tif"
+#> [131] "IDE00425.202604072220.tif" "IDE00425.202604072230.tif"
+#> [133] "IDE00425.202604072240.tif" "IDE00425.202604072250.tif"
+#> [135] "IDE00425.202604072300.tif" "IDE00425.202604072310.tif"
+#> [137] "IDE00425.202604072320.tif" "IDE00425.202604072330.tif"
+#> [139] "IDE00425.202604072340.tif" "IDE00425.202604072350.tif"
+#> [141] "IDE00425.202604080000.tif" "IDE00425.202604080010.tif"
+#> [143] "IDE00425.202604080020.tif" "IDE00425.202604080030.tif"
+```
+
+##### Using get_satellite_imagery()
+
+[`get_satellite_imagery()`](https://docs.ropensci.org/weatherOz/reference/get_satellite_imagery.md)
+fetches BOM satellite GeoTIFF imagery, returning a SpatRaster object and
+takes two arguments. Files are available at ten minute update frequency
+with a 24 hour delete time. It is suggested to check file availability
+first by using
+[`get_available_imagery()`](https://docs.ropensci.org/weatherOz/reference/get_available_imagery.md).
+The arguments are:
+
+- `product_id`, a character value of the BOM product ID to download.
+  Alternatively, a vector of values from
+  [`get_available_imagery()`](https://docs.ropensci.org/weatherOz/reference/get_available_imagery.md)
+  may be used here. This argument is mandatory.
+
+- `scans` a numeric value for the number of scans to download, starting
+  with the most recent and progressing backwards, *e.g.*, `1` - the most
+  recent single scan available , `6` - the most recent hour available,
+  `12` - the most recent 2 hours available, etc. Negating will return
+  the oldest files first. Defaults to 1. This argument is optional.
+
+##### Example 6: Fetching Satellite Imagery and Viewing It
+
+``` r
+
+library(weatherOz)
+
+# Specify product ID and scans
+i <- get_satellite_imagery(product_id = "IDE00425", scans = 1)
+```
+
+[`terra::plot()`](https://rspatial.github.io/terra/reference/plot.html)
+has been re-exported to simplify visualising these files while using
+{weatherOz}.
+
+``` r
+
+plot(i)
+```
+
+#### Using {weatherOz} With BOM Radar Imagery
+
+{weatherOz} provides functionality to retrieve the latest radar imagery
+provided by BOM through a public FTP server. These are the latest
+snapshots for each radar locations at various radar ranges *e.g.*,
+512km, 256km, 128km and 64km for some stations.
+
+##### Using get_available_radar()
+
+[`get_available_radar()`](https://docs.ropensci.org/weatherOz/reference/get_available_radar.md)
+fetches the available radar imagery from the BOM FTP and returns a data
+frame for reference. This data frame contains the product_id, which is
+required when using the
+[`get_radar_imagery()`](https://docs.ropensci.org/weatherOz/reference/get_radar_imagery.md)
+function. The files available are the latest `.png` files of BOM radar
+imagery which are typically updated each 6-10 minutes. Only the most
+recent image is retrieved for each radar location. There are usually
+several radar ranges available for each radar location, such as 512km,
+256km, 128km and possibly 64km. The arguments are:
+
+- `radar_id` which is the BOM radar ID number; this defaults to ‘all’
+  which will return a data frame of all radar IDs in Australia.
+
+##### Example 7: Getting Available Radar Imagery
+
+``` r
+
+library(weatherOz)
+x <- get_available_radar()
+head(x)
+#>    product_id LocationID  range     Name Longitude Latitude Radar_id
+#>        <char>     <char> <char>   <fctr>     <num>    <num>    <int>
+#> 1:     IDR641         64  512km Adelaide  138.4689 -34.6169       64
+#> 2:     IDR642         64  256km Adelaide  138.4689 -34.6169       64
+#> 3:     IDR643         64  128km Adelaide  138.4689 -34.6169       64
+#> 4:     IDR644         64   64km Adelaide  138.4689 -34.6169       64
+#> 5:     IDR311         31  512km   Albany  117.8163 -34.9418       31
+#> 6:     IDR312         31  256km   Albany  117.8163 -34.9418       31
+#>                   Full_Name IDRnn0name IDRnn1name  State    Type Group_ Status
+#>                      <fctr>     <fctr>     <fctr> <fctr>  <fctr> <fctr> <fctr>
+#> 1: Adelaide (Buckland Park)     BuckPk BucklandPk     SA Doppler    Yes Public
+#> 2: Adelaide (Buckland Park)     BuckPk BucklandPk     SA Doppler    Yes Public
+#> 3: Adelaide (Buckland Park)     BuckPk BucklandPk     SA Doppler    Yes Public
+#> 4: Adelaide (Buckland Park)     BuckPk BucklandPk     SA Doppler    Yes Public
+#> 5:                   Albany     Albany     Albany     WA Doppler    Yes Public
+#> 6:                   Albany     Albany     Albany     WA Doppler    Yes Public
+#>    Archive  as.is
+#>     <fctr> <lgcl>
+#> 1:  BuckPk   TRUE
+#> 2:  BuckPk   TRUE
+#> 3:  BuckPk   TRUE
+#> 4:  BuckPk   TRUE
+#> 5:  Albany   TRUE
+#> 6:  Albany   TRUE
+```
+
+##### Using get_radar_imagery()
+
+[`get_radar_imagery()`](https://docs.ropensci.org/weatherOz/reference/get_radar_imagery.md)
+fetches the latest BOM radar imagery for a given product ID. The files
+available are the latest `.png` files of BOM radar imagery, which are
+typically updated each 6-10 minutes. Only the most recent image is
+retrieved for each radar location. There are usually several radar
+ranges available for each radar location, such as 512km, 256km, 128km
+and possibly 64km. The only argument is:
+
+- `product_id` the BOM product_id associated with each radar imagery
+  file. These can be obtained from the
+  [`get_available_radar()`](https://docs.ropensci.org/weatherOz/reference/get_available_radar.md)
+  function. This value must be specified and the function will accept
+  only one at a time.
+
+##### Example 8: Fetching Radar Imagery
+
+``` r
+
+library(weatherOz)
+
+y <- get_radar_imagery(product_id = "IDR032")
+plot(y)
+```
+
+### References
+
+[Australian Bureau of Meteorology (BOM) Weather Data
+Services](https://www.bom.gov.au/catalogue/data-feeds.shtml)
+
+[Australian Bureau of Meteorology (BOM) FTP Public
+Products](https://www.bom.gov.au/catalogue/anon-ftp.shtml)
+
+[Australian Bureau of Meteorology (BOM) Weather Data Services
+Observation of
+Rainfall](https://www.bom.gov.au/climate/how/observations/rain-measure.shtml)
+
+[Australian Bureau of Meteorology (BOM) High-definition satellite
+images](https://www.bom.gov.au/australia/satellite/index.shtml)
+
+### Appendix 1 - Output From get_precis_forecast()
+
+The functions,
+[`get_precis_forecast()`](https://docs.ropensci.org/weatherOz/reference/get_precis_forecast.md)
+or \`parse_precis_forecast(), will return a data frame of the 7 day
+short forecast with the following fields:
+
+- index : Forecast index number, 0 = current day … 7 day
+
+- product_id : BOM Product ID from which the data are derived
+
+- state : State name (postal code abbreviation)
+
+- town : Town name for forecast location
+
+- aac :
+
+  AMOC Area Code, *e.g.*, WA_MW008, a unique identifier for each
+  location
+
+- lat : Latitude of named location (decimal degrees)
+
+- lon : Longitude of named location (decimal degrees)
+
+- elev : Elevation of named location (metres)
+
+- start_time_local : Start of forecast date and time in local TZ
+
+- end_time_local : End of forecast date and time in local TZ
+
+- UTC_offset :
+
+  Hours offset from difference in hours and minutes from Coordinated
+  Universal Time (UTC) for `start_time_local` and `end_time_local`
+
+- start_time_utc : Start of forecast date and time in UTC
+
+- end_time_utc : End of forecast date and time in UTC
+
+- maximum_temperature : Maximum forecast temperature (degrees Celsius)
+
+- minimum_temperature : Minimum forecast temperature (degrees Celsius)
+
+- lower_precipitation_limit : Lower forecast precipitation limit
+  (millimetres)
+
+- upper_precipitation_limit : Upper forecast precipitation limit
+  (millimetres)
+
+- precis : Précis forecast (a short summary, less than 30 characters)
+
+- probability_of_precipitation : Probability of precipitation (percent)
+
+### Appendix 2 - Output From get_coastal_forecast()
+
+The output of
+[`get_coastal_forecast()`](https://docs.ropensci.org/weatherOz/reference/get_coastal_forecast.md)
+or
+[`parse_coastal_forecast()`](https://docs.ropensci.org/weatherOz/reference/parse_coastal_forecast.md)
+will return a data frame with coastal waters forecast values of each
+area within the given state with the following fields:
+
+- index : Forecast index number. 0 = current day
+
+- product_id : BOM Product ID from which the data are derived
+
+- type : Forecast Region type e.g. Coastal
+
+- state_code : State name (postal code abbreviation)
+
+- dist_name : Name of forecast district
+
+- pt_1_name : Start of forecast district
+
+- pt_2_name : End of forecast district
+
+- aac :
+
+  AMOC Area Code, *e.g.*, WA_MW008, a unique identifier for each
+  location
+
+- start_time_local : Start of forecast date and time in local TZ
+
+- end_time_local : End of forecast date and time in local TZ
+
+- UTC_offset :
+
+  Hours offset from difference in hours and minutes from Coordinated
+  Universal Time (UTC) for `start_time_local` and `end_time_local`
+
+- start_time_utc : Start of forecast date and time in UTC
+
+- end_time_utc : End of forecast date and time in UTC
+
+- forecast_seas : Forecast sea conditions
+
+- forecast_weather : Forecast weather summary
+
+- forecast_winds : Forecast winds summary
+
+- forecast_swell1 : Forecast primary swell summary
+
+- forecast_swell2 : Forecast seondary swell summary (not always
+  provided)
+
+- forecast_caution : Forecast caution issued (not always provided)
+
+- marine_forecast : Additional marine forecast warning information (not
+  always provided)

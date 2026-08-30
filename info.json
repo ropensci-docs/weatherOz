@@ -1,0 +1,13 @@
+{
+  "commit": {
+    "commit": "0d0df1d67f149d21980970fe781d7085c99d20ac",
+    "author": "Rodrigo Pires <rodrigo.pires@dpird.wa.gov.au>",
+    "time": "2026-04-08T01:07:53Z",
+    "files": 24,
+    "merge": false,
+    "message": "BOM urls moved, update docs, spelling and README\n"
+  },
+  "repo": "https://github.com/ropensci/weatherOz",
+  "pkg": "weatherOz",
+  "time": "2026-08-30T07:34:22Z"
+}

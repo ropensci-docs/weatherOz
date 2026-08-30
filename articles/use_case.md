@@ -1,0 +1,163 @@
+# weatherOz Use Case
+
+## Introduction
+
+[Summer pulses (*e.g.*, mungbeans) are a high value crop for Queensland
+grain growers](https://grainsaustralia.com.au). However, temperatures
+above 40 °C, particularly during flowering, can have a severe
+detrimental effect on crop yields (Kaushal et al. 2016). A key strategy
+that plants use to minimise the impact of heat stress is evaporative
+cooling. Ensuring crops are well watered prior to a heat stress event
+(so to facilitate high rates of evaporative cooling) is a potential
+strategy to ensure that irrigated crops avoid heat stress. However, this
+requires farmers to recognise a heat stress event is coming and commence
+irrigating with enough time to water the entire crop prior to the event
+occurring.
+
+The [{WINS}](https://github.com/ToowoombaTrio/WINS) for pulses project
+provides warnings when heat stress events are likely to occur so that
+farmers can irrigate their crops prior to the event to minimise any
+resulting yield loss. It does this by using the
+[`get_precis_forecast()`](https://docs.ropensci.org/weatherOz/reference/get_precis_forecast.md)
+function from {weatherOz} along with functionality from
+[{mailR}](https://CRAN.R-project.org/package=mailR) (Premraj 2021).
+
+## Materials and Methods
+
+``` r
+
+install.packages("weatherOz")
+install.packages("mailR")
+library(dplyr)  # for filter()
+library(weatherOz)
+library(mailR)
+```
+
+For this to work we require a list of alert subscribers. Here we create
+a dummy set of subscribers, locations, and email addresses.
+
+``` r
+
+subscribers_list <-
+  data.frame(cbind(
+    c(1, 2, 3),
+    c("Joe", "John", "Jayne"),
+    c("Blogs", "Doe", "Doe"),
+    c("Dalby", "Toowoomba", "Warwick"),
+    c(
+      "XXXX.XXXX@gmail.com",
+      "XXXX.XXXX@hotmail.com",
+      "123.123@gmail.com"
+    )
+  ))
+colnames(subscribers_list) <-
+  c("Entry", "Name", "Surname", "Location", "email")
+head(subscribers_list)
+```
+
+    ##   Entry  Name Surname  Location                 email
+    ## 1     1   Joe   Blogs     Dalby   XXXX.XXXX@gmail.com
+    ## 2     2  John     Doe Toowoomba XXXX.XXXX@hotmail.com
+    ## 3     3 Jayne     Doe   Warwick     123.123@gmail.com
+
+We also need to specify our email address and password. For this project
+we are using a gmail account to send the email alerts.
+
+``` r
+
+our_email <- "yyyy***xxxx@gmail.com"
+our_password <- "*password*"
+```
+
+Finally we need to set a forecast temperature threshold that will
+trigger an alert to be sent.
+
+``` r
+
+threshold_temp <- 40
+```
+
+We then use {weatherOz} to access the latest précis forecast for
+Queensland.
+
+``` r
+
+QLD_forecast <- get_precis_forecast(state = "QLD")
+```
+
+Now we use a `for()` loop that searches through the Queensland précis
+forecast data frame and subsets it based on location each subscriber has
+nominated and the temperature threshold we have set. As part of the
+`for()` loop there is an `if()` statement that uses the {mailR} package
+to send an email to the subscribers if the forecast maximum temperatures
+are greater than or equal to the threshold. This email informs the
+recipient of the dates that high temperatures are expected.
+
+``` r
+QLD_hotdates <-
+  QLD_forecast %>%
+  filter(maximum_temperature >= threshold_temp)
+
+for (x in seq_len(nrow(subscribers_list))) {
+  subscriber_location <- subscribers_list[["Location"]][x]
+  if (subscriber_location %in% QLD_hotdates[["town"]]) {
+    hot_dates <-
+      paste(gsub("00:00:00", "", QLD_hotdates$start_time_local),
+            collapse = ", ")
+
+    body_text <-
+      paste(
+        "\nHello ",
+        as.character(subscribers_list$Name[x]),
+        ".\n",
+        "\nYour mungbean crops at ",
+        subscriber_location,
+        "\nare forecast to be exposed to heat stress on the\n",
+        "\nfollowing dates: ",
+        hot_dates,
+        ".\n",
+        "\nConsider irrigating your crops beforehand to\n"
+        "\nfacilitate transpirational cooling.\n",
+        "\nFrom the WINS team\n"
+      )
+    recipient <-
+      as.character(subscribers_list$email[x])
+    send.mail(
+      from = our_email,
+      to = recipient,
+      subject = "Mungbean Heat Stress Warning",
+      body = body_text,
+      smtp = list(
+        host.name = "smtp.gmail.com",
+        port = 465,
+        user.name = our_email,
+        passwd = our_password,
+        ssl = TRUE
+      ),
+      authenticate = TRUE,
+      send = TRUE
+    )
+  }
+}
+```
+
+## Summary
+
+The process is automated to run on a cron job such that the précis
+forecast is automatically downloaded and thresholds are calculated on a
+daily basis with email alerts being sent automatically.
+
+While mungbean heat stress is illustrated here, other thresholds can be
+implemented, *e.g.*, frost events for sugarcane harvest using this same
+functionality.
+
+## References
+
+Kaushal, Neeru, Kalpna Bhandari, Kadambot H. M. Siddique, and Harsh
+Nayyar. 2016. “Food Crops Face Rising Temperatures: An Overview of
+Responses, Adaptive Mechanisms, and Approaches to Improve Heat
+Tolerance.” *Cogent Food &Amp; Agriculture* 2 (1).
+<https://doi.org/10.1080/23311932.2015.1134380>.
+
+Premraj, Rahul. 2021. *mailR: A Utility to Send Emails from R*.
+<https://CRAN.R-project.org/package=mailR>.

@@ -1,0 +1,14 @@
+pandoc: 3.8.3
+pkgdown: 2.2.1
+pkgdown_sha: ~
+articles:
+  use_case: use_case.html
+  weatherOz_for_BOM: weatherOz_for_BOM.html
+  weatherOz_for_DPIRD: weatherOz_for_DPIRD.html
+  weatherOz_for_metno: weatherOz_for_metno.html
+  weatherOz_for_SILO: weatherOz_for_SILO.html
+  weatherOz: weatherOz.html
+last_built: 2026-08-30T07:33Z
+urls:
+  reference: https://docs.ropensci.org/weatherOz/reference
+  article: https://docs.ropensci.org/weatherOz/articles

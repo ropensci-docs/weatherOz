@@ -1,0 +1,105 @@
+# weatherOz: An API Client for Australian Weather and Climate Data Resources
+
+Provides automated downloading, parsing and formatting of weather data
+for Australia through API endpoints provided by the Department of
+Primary Industries and Regional Development (DPIRD) of Western Australia
+and by the Science and Technology Division of the Queensland
+Government's Department of Environment and Science (DES). As well as the
+Bureau of Meteorology (BOM) of the Australian government precis and
+coastal forecasts, and downloading and importing radar and satellite
+imagery files. DPIRD weather data are accessed through public APIs
+provided by DPIRD, <https://www.dpird.wa.gov.au/online-tools/apis/>,
+providing access to weather station data from the DPIRD weather station
+network. Australia-wide weather data are based on data from the
+Australian Bureau of Meteorology (BOM) data and accessed through SILO
+(Scientific Information for Land Owners) Jeffrey et al. (2001)
+[doi:10.1016/S1364-8152(01)00008-1](https://doi.org/10.1016/S1364-8152%2801%2900008-1)
+. DPIRD data are made available under a Creative Commons Attribution 3.0
+Licence (CC BY 3.0 AU) license
+<https://creativecommons.org/licenses/by/3.0/au/deed.en>. SILO data are
+released under a Creative Commons Attribution 4.0 International licence
+(CC BY 4.0) <https://creativecommons.org/licenses/by/4.0/>. BOM data are
+(c) Australian Government Bureau of Meteorology and released under a
+Creative Commons (CC) Attribution 3.0 licence or Public Access Licence
+(PAL) as appropriate, see <https://www.bom.gov.au/copyright> for further
+details.
+
+## See also
+
+Useful links:
+
+- <https://github.com/ropensci/weatherOz/>
+
+- <https://docs.ropensci.org/weatherOz/>
+
+- Report bugs at <https://github.com/ropensci/weatherOz/issues>
+
+## Author
+
+**Maintainer**: Rodrigo Pires <rodrigo.pires@dpird.wa.gov.au>
+([ORCID](https://orcid.org/0000-0001-7384-6849))
+
+Authors:
+
+- Anna Hepworth <anna.hepworth@gmail.com>
+  ([ORCID](https://orcid.org/0000-0003-0204-6347))
+
+- Rebecca O'Leary <bec.oleary@curtin.edu.au>
+
+- Jonathan Carroll <rpkg@jcarroll.com.au>
+  ([ORCID](https://orcid.org/0000-0002-1404-5264))
+
+- James Goldie <me@jamesgoldie.dev>
+  ([ORCID](https://orcid.org/0000-0002-5024-6207))
+
+- Dean Marchiori <deanmarchiori@gmail.com>
+  ([ORCID](https://orcid.org/0000-0002-3430-7225))
+
+- Paul Melloy <paul@melloy.com.au>
+  ([ORCID](https://orcid.org/0000-0003-4253-7167))
+
+- Mark Padgham <mark.padgham@email.com>
+  ([ORCID](https://orcid.org/0000-0003-2172-5265))
+
+- Hugh Parsonage <hugh.parsonage@gmail.com>
+  ([ORCID](https://orcid.org/0000-0003-4055-0835))
+
+- Adam H. Sparks <adamhsparks@gmail.com>
+  ([ORCID](https://orcid.org/0000-0002-0061-8359))
+
+Other contributors:
+
+- Keith Pembleton <keith.pembleton@unisq.edu.au>
+  ([ORCID](https://orcid.org/0000-0002-1896-4516)) (Contributed code and
+  ideas for original bomrang package that was used in the creation of
+  weatherOz.) \[contributor\]
+
+- Maëlle Salmon <maelle.salmon@yahoo.se>
+  ([ORCID](https://orcid.org/0000-0002-2815-0399)) (Contributed to
+  debugging a nasty little bug with CI where timezones caused tests to
+  fail due to vcr not recognising the URL when run outside of
+  Australia-Perth TZ! Suggested the use of local_timzeone().)
+  \[contributor\]
+
+- Max Moldovan <max.moldovan@adelaide.edu.au>
+  ([ORCID](https://orcid.org/0000-0001-9680-8474)) (Contributed valuable
+  feedback on package usage leading to improvements in the package
+  structure and functionality.) \[contributor\]
+
+- Stephen Bradshaw <stephen.bradshaw@dpird.wa.gov.au>
+  ([ORCID](https://orcid.org/0000-0003-3096-8787)) (Identified data
+  structure issues and provided insights that improved package data
+  quality and usability.) \[contributor\]
+
+- Jimmy Ng <jimmy.ng@dpird.wa.gov.au> \[contributor\]
+
+- Steve Collins <steve.collins@dpird.wa.gov.au> (Designed the hex logo
+  for 'weatherOz' hex logo.) \[contributor\]
+
+- Laurens Geffert <laurensgeffert@gmail.com> \[reviewer\]
+
+- Sam Rogers <sam.rogers@adelaide.edu.au> \[reviewer\]
+
+- Western Australia Agriculture Authority (WAAA) \[copyright holder\]
+
+- Curtin University \[copyright holder\]

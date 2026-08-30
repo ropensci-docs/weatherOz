@@ -1,0 +1,1301 @@
+# weatherOz for SILO
+
+## About SILO Data
+
+[Queensland Scientific Information for Landowners
+(SILO)](https://www.longpaddock.qld.gov.au/silo/about/) data sets are
+constructed from observational records provided by the Bureau of
+Meteorology (BOM). SILO interpolates the raw data to fill missing data
+creating data sets that are spatially and temporally complete (Jeffrey
+et al. 2001).
+
+## A Note on API Keys
+
+All examples in this vignette assume that you have stored your API key
+in your .Renviron file. See [Chapter
+8](https://rstats.wtf/r-startup.html#renviron) in “What They Forgot to
+Teach You About R” by Bryan *et al.* for more on storing details in your
+.Renviron if you are unfamiliar.
+
+## Working With SILO Data
+
+Four functions are provided to streamline fetching data from the SILO
+API endpoints.
+
+- [`get_data_drill()`](https://docs.ropensci.org/weatherOz/reference/get_data_drill.md),
+  which returns weather data from SILO’s 0.05 x 0.05 degrees
+  interpolated, gridded weather dataset;
+- [`get_patched_point()`](https://docs.ropensci.org/weatherOz/reference/get_patched_point.md),
+  which returns weather data from a given BOM weather station (a point)
+  in the SILO database where missing values are interpolated (patched);
+- [`get_data_drill_apsim()`](https://docs.ropensci.org/weatherOz/reference/get_data_drill_apsim.md),
+  which returns data drill weather data in an {apsimx} `.met` class
+  object with the weather data ready for use in APSIM; and
+- [`get_patched_point_apsim()`](https://docs.ropensci.org/weatherOz/reference/get_patched_point_apsim.md),
+  which returns patched point weather data in an {apsimx} `.met` class
+  object with the weather data ready for use in APSIM.
+
+## Available Values
+
+[`get_data_drill()`](https://docs.ropensci.org/weatherOz/reference/get_data_drill.md)
+and
+[`get_patched_point()`](https://docs.ropensci.org/weatherOz/reference/get_patched_point.md)
+both accept the following values.
+[`get_data_drill_apsim()`](https://docs.ropensci.org/weatherOz/reference/get_data_drill_apsim.md)
+and
+[`get_patched_point_apsim()`](https://docs.ropensci.org/weatherOz/reference/get_patched_point_apsim.md)
+return a canned set of values for use in APSIM, because of this, they do
+not accept a `values` argument.
+
+- all : Which will return all of the following values
+
+- max_temp (degrees C) : Maximum temperature
+
+- min_temp (degrees C) : Minimum temperature
+
+- vp (hPa) : Vapour pressure
+
+- vp_deficit (hPa) : Vapour pressure deficit
+
+- evap_pan (mm) : Class A pan evaporation
+
+- evap_syn (mm) :
+
+  Synthetic estimate (Rayner 2005)
+
+- evap_comb (mm) : Combination (synthetic estimate pre-1970, class A pan
+  1970 onwards)
+
+- evap_morton_lake (mm) : Morton’s shallow lake evaporation
+
+- radiation (Mj/m (Morton 1983)) : Solar exposure, consisting of both
+  direct and diffuse components
+
+- rh_tmax (%) : Relative humidity at the time of maximum temperature
+
+- rh_tmin (%) : Relative humidity at the time of minimum temperature
+
+- et_short_crop (mm) :
+
+  FAO56 (Allen 1998) short crop
+
+- et_tall_crop (mm) :
+
+  ASCE (Walter et al. 2000) tall crop (Jeffrey et al. 2001)
+
+- et_morton_actual (mm) : Morton’s areal actual evapotranspiration
+
+- et_morton_potential (mm) : Morton’s point potential evapotranspiration
+
+- et_morton_wet (mm) : Morton’s wet-environment areal potential
+  evapotranspiration over land
+
+- mslp (hPa) : Mean sea level pressure
+
+## Value Information
+
+Solar radiation: total incoming downward shortwave radiation on a
+horizontal surface, derived from estimates of cloud oktas and sunshine
+duration (Zajaczkowski et al. 2013).
+
+Relative humidity: calculated using the vapour pressure measured at 9am,
+and the saturation vapour pressure computed using either the maximum or
+minimum temperature (Jeffrey et al. 2001).
+
+Evaporation and evapotranspiration: an overview of the variables
+provided by SILO is available as a
+[PDF](https://data.longpaddock.qld.gov.au/static/publications/Evapotranspiration_overview.pdf).
+
+## Data Codes
+
+Where possible (depending on the file format), the data are supplied
+with codes indicating how each datum was obtained.
+
+- 0 : Official observation as supplied by the Bureau of Meteorology
+- 15 : Deaccumulated rainfall (original observation was recorded over a
+  period exceeding the standard 24 hour observation period)
+- 25 : Interpolated from daily observations for that date
+- 26 : Synthetic Class A pan evaporation, calculated from temperatures,
+  radiation and vapour pressure
+- 35 : Interpolated from daily observations using an anomaly
+  interpolation method
+- 75 : Interpolated from the long term averages of daily observations
+  for that day of year
+
+The data returned will include columns that denote the source of the
+data, whether it was an observation or interpolated.
+
+## Getting Data Drill Interpolated Data
+
+The
+[`get_data_drill()`](https://docs.ropensci.org/weatherOz/reference/get_data_drill.md)
+function fetches spatially interpolated data from SILO for any point in
+Australia. Note that these data are not observations, but are
+interpolated surfaced derived by using either by splining or kriging the
+observational data. The arguments required to use this function are
+minimal with few options. The location as longitude and latitude,
+`longitude` and `latitude`, values must be provided along with the start
+date, `start_date` and the api key, `api_key` (your e-mail address).
+
+### Example 1: Get Data Drill Data Using Defaults
+
+Using coordinates for Southwood, Qld, get Data Drill data for all values
+available starting on 2022-01-01.
+
+``` r
+
+library(weatherOz)
+
+(
+  southwood <- get_data_drill(
+    latitude = -27.85,
+    longitude = 150.05,
+    start_date = "20220101"
+  )
+)
+#>       longitude latitude  year month   day       date air_tmax air_tmax_source
+#>           <num>    <num> <num> <num> <int>     <Date>    <num>           <int>
+#>    1:    150.05   -27.85  2022     1     1 2022-01-01     29.7              25
+#>    2:    150.05   -27.85  2022     1     2 2022-01-02     33.6              25
+#>    3:    150.05   -27.85  2022     1     3 2022-01-03     35.7              25
+#>    4:    150.05   -27.85  2022     1     4 2022-01-04     36.3              25
+#>    5:    150.05   -27.85  2022     1     5 2022-01-05     36.4              25
+#>   ---                                                                         
+#> 1492:    150.05   -27.85  2026     1    31 2026-01-31     37.6              25
+#> 1493:    150.05   -27.85  2026     2     1 2026-02-01     39.9              25
+#> 1494:    150.05   -27.85  2026     2     2 2026-02-02     39.0              25
+#> 1495:    150.05   -27.85  2026     2     3 2026-02-03     31.7              25
+#> 1496:    150.05   -27.85  2026     2     4 2026-02-04     33.1              75
+#>       air_tmin air_tmin_source  elev_m et_morton_actual et_morton_actual_source
+#>          <num>           <int>  <char>            <num>                   <int>
+#>    1:     18.8              25 254.5 m              4.3                      26
+#>    2:     16.6              25 254.5 m              6.2                      26
+#>    3:     18.1              25 254.5 m              4.3                      26
+#>    4:     18.1              25 254.5 m              5.1                      26
+#>    5:     20.3              25 254.5 m              5.0                      26
+#>   ---                                                                          
+#> 1492:     22.8              25 254.5 m              3.7                      26
+#> 1493:     22.5              25 254.5 m              2.3                      26
+#> 1494:     25.8              25 254.5 m              1.5                      26
+#> 1495:     20.5              25 254.5 m              0.5                      26
+#> 1496:     19.0              25 254.5 m              0.4                      26
+#>       et_morton_potential et_morton_potential_source et_morton_wet
+#>                     <num>                      <int>         <num>
+#>    1:                 7.2                         26           5.7
+#>    2:                 9.6                         26           7.9
+#>    3:                11.5                         26           7.9
+#>    4:                11.1                         26           8.1
+#>    5:                10.9                         26           8.0
+#>   ---                                                             
+#> 1492:                11.4                         26           7.6
+#> 1493:                12.3                         26           7.3
+#> 1494:                11.9                         26           6.7
+#> 1495:                 8.6                         26           4.6
+#> 1496:                 7.9                         26           4.2
+#>       et_morton_wet_source et_short_crop et_short_crop_source et_tall_crop
+#>                      <int>         <num>                <int>        <num>
+#>    1:                   26           5.2                   26          6.3
+#>    2:                   26           7.0                   26          8.6
+#>    3:                   26           7.7                   26          9.9
+#>    4:                   26           7.7                   26          9.7
+#>    5:                   26           7.5                   26          9.4
+#>   ---                                                                     
+#> 1492:                   26           7.4                   26          9.6
+#> 1493:                   26           7.8                   26         10.3
+#> 1494:                   26           7.1                   26          9.5
+#> 1495:                   26           5.3                   26          7.2
+#> 1496:                   26           5.1                   26          7.0
+#>       et_tall_crop_source evap_comb evap_comb_source evap_morton_lake
+#>                     <int>     <num>            <int>            <num>
+#>    1:                  26       5.0               25              6.0
+#>    2:                  26       9.2               25              8.3
+#>    3:                  26       8.1               25              8.3
+#>    4:                  26       8.6               25              8.5
+#>    5:                  26       6.3               25              8.3
+#>   ---                                                                
+#> 1492:                  26       8.5               25              7.9
+#> 1493:                  26      10.9               25              7.6
+#> 1494:                  26       9.0               25              6.9
+#> 1495:                  26       6.0               25              4.7
+#> 1496:                  26       7.8               75              4.3
+#>       evap_morton_lake_source evap_pan evap_pan_source evap_syn evap_syn_source
+#>                         <int>    <num>           <int>    <num>           <int>
+#>    1:                      26      5.0              25      6.8              26
+#>    2:                      26      9.2              25      9.2              26
+#>    3:                      26      8.1              25     10.5              26
+#>    4:                      26      8.6              25     10.4              26
+#>    5:                      26      6.3              25     10.1              26
+#>   ---                                                                          
+#> 1492:                      26      8.5              25     10.4              26
+#> 1493:                      26     10.9              25     11.3              26
+#> 1494:                      26      9.0              25     10.3              26
+#> 1495:                      26      6.0              25      7.2              26
+#> 1496:                      26      7.8              75      7.2              26
+#>        extracted   mslp mslp_source radiation radiation_source rainfall
+#>           <Date>  <num>       <int>     <num>            <int>    <num>
+#>    1: 2026-02-05 1011.8          25      22.6               42     54.9
+#>    2: 2026-02-05 1008.5          25      31.3               42      0.1
+#>    3: 2026-02-05 1005.1          25      31.3               42      0.0
+#>    4: 2026-02-05 1005.1          25      31.3               42      0.0
+#>    5: 2026-02-05 1005.5          25      29.8               42      0.0
+#>   ---                                                                  
+#> 1492: 2026-02-05 1010.3          25      27.4               42      0.0
+#> 1493: 2026-02-05 1008.2          25      26.2               42      0.0
+#> 1494: 2026-02-05 1009.3          25      22.3               42      0.0
+#> 1495: 2026-02-05 1019.5          25      16.9               42     11.6
+#> 1496: 2026-02-05 1019.2          25      14.8               25      0.0
+#>       rainfall_source rh_tmax rh_tmax_source rh_tmin rh_tmin_source    vp
+#>                 <int>   <num>          <int>   <num>          <int> <num>
+#>    1:              25    48.0             26    92.2             26  20.0
+#>    2:              25    36.3             26   100.0             26  18.9
+#>    3:              25    26.5             26    74.7             26  15.5
+#>    4:              25    29.1             26    84.8             26  17.6
+#>    5:              25    32.3             26    82.3             26  19.6
+#>   ---                                                                    
+#> 1492:              25    30.4             26    71.0             26  19.7
+#> 1493:              25    23.7             26    63.9             26  17.4
+#> 1494:              25    27.3             26    57.5             26  19.1
+#> 1495:              25    32.3             26    62.6             26  15.1
+#> 1496:              25    31.8             26    73.3             26  16.1
+#>       vp_deficit vp_deficit_source vp_source
+#>            <num>             <int>     <int>
+#>    1:       15.6                26        25
+#>    2:       22.0                26        25
+#>    3:       30.2                26        25
+#>    4:       29.3                26        25
+#>    5:       29.0                26        25
+#>   ---                                       
+#> 1492:       33.2                26        25
+#> 1493:       40.6                26        25
+#> 1494:       39.3                26        25
+#> 1495:       24.7                26        25
+#> 1496:       25.3                26        25
+```
+
+### Example 2: Get Data Drill Temperature for a Specific Date Range
+
+Using coordinates for Southwood, Qld, get Data Drill temperature data
+for January of 2023.
+
+``` r
+
+library(weatherOz)
+
+(
+  southwood_temp <- get_data_drill(
+    latitude = -27.85,
+    longitude = 150.05,
+    start_date = "20230101",
+    end_date = "20230131",
+    values = c("max_temp", "min_temp")
+  )
+)
+#>     longitude latitude  year month   day       date air_tmax air_tmax_source
+#>         <num>    <num> <num> <num> <int>     <Date>    <num>           <int>
+#>  1:    150.05   -27.85  2023     1     1 2023-01-01     35.2              25
+#>  2:    150.05   -27.85  2023     1     2 2023-01-02     35.3              25
+#>  3:    150.05   -27.85  2023     1     3 2023-01-03     36.6              25
+#>  4:    150.05   -27.85  2023     1     4 2023-01-04     39.1              25
+#>  5:    150.05   -27.85  2023     1     5 2023-01-05     31.4              25
+#>  6:    150.05   -27.85  2023     1     6 2023-01-06     34.4              25
+#>  7:    150.05   -27.85  2023     1     7 2023-01-07     33.4              25
+#>  8:    150.05   -27.85  2023     1     8 2023-01-08     35.8              25
+#>  9:    150.05   -27.85  2023     1     9 2023-01-09     36.4              25
+#> 10:    150.05   -27.85  2023     1    10 2023-01-10     38.0              25
+#> 11:    150.05   -27.85  2023     1    11 2023-01-11     33.3              25
+#> 12:    150.05   -27.85  2023     1    12 2023-01-12     34.2              25
+#> 13:    150.05   -27.85  2023     1    13 2023-01-13     33.6              25
+#> 14:    150.05   -27.85  2023     1    14 2023-01-14     32.2              25
+#> 15:    150.05   -27.85  2023     1    15 2023-01-15     34.2              25
+#> 16:    150.05   -27.85  2023     1    16 2023-01-16     33.7              25
+#> 17:    150.05   -27.85  2023     1    17 2023-01-17     34.8              25
+#> 18:    150.05   -27.85  2023     1    18 2023-01-18     34.4              25
+#> 19:    150.05   -27.85  2023     1    19 2023-01-19     35.0              25
+#> 20:    150.05   -27.85  2023     1    20 2023-01-20     33.4              25
+#> 21:    150.05   -27.85  2023     1    21 2023-01-21     33.6              25
+#> 22:    150.05   -27.85  2023     1    22 2023-01-22     33.3              25
+#> 23:    150.05   -27.85  2023     1    23 2023-01-23     34.6              25
+#> 24:    150.05   -27.85  2023     1    24 2023-01-24     35.1              25
+#> 25:    150.05   -27.85  2023     1    25 2023-01-25     38.1              25
+#> 26:    150.05   -27.85  2023     1    26 2023-01-26     38.7              25
+#> 27:    150.05   -27.85  2023     1    27 2023-01-27     34.3              25
+#> 28:    150.05   -27.85  2023     1    28 2023-01-28     36.7              25
+#> 29:    150.05   -27.85  2023     1    29 2023-01-29     37.7              25
+#> 30:    150.05   -27.85  2023     1    30 2023-01-30     37.1              25
+#> 31:    150.05   -27.85  2023     1    31 2023-01-31     31.6              25
+#>     longitude latitude  year month   day       date air_tmax air_tmax_source
+#>         <num>    <num> <num> <num> <int>     <Date>    <num>           <int>
+#>     air_tmin air_tmin_source  elev_m  extracted
+#>        <num>           <int>  <char>     <Date>
+#>  1:     19.5              25 254.5 m 2026-02-05
+#>  2:     19.6              25 254.5 m 2026-02-05
+#>  3:     20.6              25 254.5 m 2026-02-05
+#>  4:     20.9              25 254.5 m 2026-02-05
+#>  5:     21.4              25 254.5 m 2026-02-05
+#>  6:     16.4              25 254.5 m 2026-02-05
+#>  7:     19.8              25 254.5 m 2026-02-05
+#>  8:     18.4              25 254.5 m 2026-02-05
+#>  9:     20.7              25 254.5 m 2026-02-05
+#> 10:     21.9              25 254.5 m 2026-02-05
+#> 11:     21.4              25 254.5 m 2026-02-05
+#> 12:     20.8              25 254.5 m 2026-02-05
+#> 13:     18.3              25 254.5 m 2026-02-05
+#> 14:     18.6              25 254.5 m 2026-02-05
+#> 15:     19.0              25 254.5 m 2026-02-05
+#> 16:     19.7              25 254.5 m 2026-02-05
+#> 17:     18.5              25 254.5 m 2026-02-05
+#> 18:     18.1              25 254.5 m 2026-02-05
+#> 19:     18.7              25 254.5 m 2026-02-05
+#> 20:     20.6              25 254.5 m 2026-02-05
+#> 21:     17.7              25 254.5 m 2026-02-05
+#> 22:     20.0              25 254.5 m 2026-02-05
+#> 23:     20.3              25 254.5 m 2026-02-05
+#> 24:     20.4              25 254.5 m 2026-02-05
+#> 25:     20.2              25 254.5 m 2026-02-05
+#> 26:     21.3              25 254.5 m 2026-02-05
+#> 27:     23.1              25 254.5 m 2026-02-05
+#> 28:     18.5              25 254.5 m 2026-02-05
+#> 29:     21.6              25 254.5 m 2026-02-05
+#> 30:     24.7              25 254.5 m 2026-02-05
+#> 31:     21.9              25 254.5 m 2026-02-05
+#>     air_tmin air_tmin_source  elev_m  extracted
+#>        <num>           <int>  <char>     <Date>
+```
+
+### Example 3: Get Data Drill APSIM-ready Data
+
+For APSIM users, SILO provides an endpoint that serves APSIM formatted
+data ready for use in this modelling framework. The
+[`get_data_drill_apsim()`](https://docs.ropensci.org/weatherOz/reference/get_data_drill_apsim.md)
+function works just as
+[`get_data_drill()`](https://docs.ropensci.org/weatherOz/reference/get_data_drill.md),
+it just returns an object that is an {\[apsimx\]} `met` class rather
+than a `data.table` and there is no need to specify values as those are
+predetermined by the API endpoint. The \[write_apsim_met()\] function is
+reexported from [{apsimx}](https://cran.r-project.org/package=apsimx)
+for convenience in saving .met files.
+
+``` r
+
+library(weatherOz)
+
+(
+  southwood_apsim <- get_data_drill_apsim(
+    latitude = -27.85,
+    longitude = 150.05,
+    start_date = "20230101",
+    end_date = "20231231"
+  )
+)
+#> weather.met.weather 
+#> site =  
+#> latitude = -27.85  (DECIMAL DEGREES) 
+#> longitude = 150.05  (DECIMAL DEGREES) 
+#> tav = 20.8006868131868 (oC) ! calculated annual average ambient temperature 2026-02-05 11:42:52.512541 
+#> amp = 14.85 !calculated with the apsimx R package: 2026-02-05 11:42:52.51464 
+#> year day radn maxt mint rain evap vp code 
+#> () () (MJ/m^2) (oC) (oC) (mm) (mm) (hPa) () 
+#>   year day radn maxt mint rain evap   vp   code
+#> 1 2023   2 30.4 35.3 19.6  0.0  8.2 17.0 422222
+#> 2 2023   3 22.7 36.6 20.6  0.0  6.1 18.2 422222
+#> 3 2023   4 22.0 39.1 20.9  0.0  8.5 21.0 422222
+#> 4 2023   5 12.1 31.4 21.4  3.6  6.5 18.1 422222
+#> 5 2023   6 30.1 34.4 16.4  0.0  6.7 17.1 422222
+#> 6 2023   7 27.6 33.4 19.8  0.0  5.7 15.7 422222
+```
+
+## Getting Patched Point Data
+
+Patched Point data are derived from actual BOM station observations
+(PatchedPoint) data and may or may not be interpolated. Be sure to note
+the `data_source` column to be sure. The functions,
+[`get_patched_point()`](https://docs.ropensci.org/weatherOz/reference/get_patched_point.md)
+and
+[`get_patched_point_apsim()`](https://docs.ropensci.org/weatherOz/reference/get_patched_point_apsim.md)
+work exactly as their Data Drill counterparts except that they require a
+station code, `station_code`, rather than longitude and latitude values
+for the geographic location.
+
+### Example 4: Get Data Drill Data Using Defaults
+
+Using the station code for Wongan Hills, WA, get all values for June of
+2021.
+
+``` r
+
+library(weatherOz)
+
+(
+  wongan_hills <- get_patched_point(
+    station_code = "008137",
+    start_date = "20210601",
+    end_date = "20210630"
+  )
+)
+#> You have requested station observation data but some rows in this
+#> dataset have data codes for interpolated data.
+#> Check the 'data_source' columns and `get_patched_point()` or
+#> `get_data_drill()` documentation for further details on codes and
+#> references.
+#>     station_code station_name  year month   day       date air_tmax air_tmax_source
+#>           <fctr>       <char> <num> <num> <int>     <Date>    <num>           <int>
+#>  1:       008137 Wongan Hills  2021     6     1 2021-06-01     15.0               0
+#>  2:       008137 Wongan Hills  2021     6     2 2021-06-02     17.4               0
+#>  3:       008137 Wongan Hills  2021     6     3 2021-06-03     18.6               0
+#>  4:       008137 Wongan Hills  2021     6     4 2021-06-04     20.3               0
+#>  5:       008137 Wongan Hills  2021     6     5 2021-06-05     20.5               0
+#>  6:       008137 Wongan Hills  2021     6     6 2021-06-06     20.5              25
+#>  7:       008137 Wongan Hills  2021     6     7 2021-06-07     15.8              25
+#>  8:       008137 Wongan Hills  2021     6     8 2021-06-08     16.3               0
+#>  9:       008137 Wongan Hills  2021     6     9 2021-06-09     18.2               0
+#> 10:       008137 Wongan Hills  2021     6    10 2021-06-10     17.9               0
+#> 11:       008137 Wongan Hills  2021     6    11 2021-06-11     18.5               0
+#> 12:       008137 Wongan Hills  2021     6    12 2021-06-12     18.5               0
+#> 13:       008137 Wongan Hills  2021     6    13 2021-06-13     19.2               0
+#> 14:       008137 Wongan Hills  2021     6    14 2021-06-14     17.7               0
+#> 15:       008137 Wongan Hills  2021     6    15 2021-06-15     15.1               0
+#> 16:       008137 Wongan Hills  2021     6    16 2021-06-16     17.4               0
+#> 17:       008137 Wongan Hills  2021     6    17 2021-06-17     16.0               0
+#> 18:       008137 Wongan Hills  2021     6    18 2021-06-18     17.3               0
+#> 19:       008137 Wongan Hills  2021     6    19 2021-06-19     17.7               0
+#> 20:       008137 Wongan Hills  2021     6    20 2021-06-20     12.1               0
+#>     air_tmin air_tmin_source  elev_m et_morton_actual et_morton_actual_source
+#>        <num>           <int>  <char>            <num>                   <int>
+#>  1:      5.5               0 283.0 m              1.0                      26
+#>  2:      5.1               0 283.0 m              1.7                      26
+#>  3:      5.9               0 283.0 m              1.2                      26
+#>  4:      4.8               0 283.0 m              1.1                      26
+#>  5:      4.6               0 283.0 m              1.2                      26
+#>  6:      4.6               0 283.0 m              1.4                      26
+#>  7:      5.4              25 283.0 m              1.5                      26
+#>  8:      4.8              25 283.0 m              0.6                      26
+#>  9:      7.2               0 283.0 m              0.2                      26
+#> 10:      9.9               0 283.0 m              1.0                      26
+#> 11:      9.8               0 283.0 m              1.9                      26
+#> 12:     11.3               0 283.0 m              1.5                      26
+#> 13:      6.7               0 283.0 m              1.1                      26
+#> 14:      9.5              25 283.0 m              1.4                      26
+#> 15:      5.2               0 283.0 m              1.1                      26
+#> 16:      5.2               0 283.0 m              0.9                      26
+#> 17:      4.9               0 283.0 m              1.1                      26
+#> 18:      3.5               0 283.0 m              1.2                      26
+#> 19:      3.4               0 283.0 m              0.6                      26
+#> 20:      6.0               0 283.0 m              0.9                      26
+#>     et_morton_potential et_morton_potential_source et_morton_wet
+#>                   <num>                      <int>         <num>
+#>  1:                 1.0                         26           1.0
+#>  2:                 1.9                         26           1.8
+#>  3:                 2.5                         26           1.9
+#>  4:                 2.8                         26           1.9
+#>  5:                 2.6                         26           1.9
+#>  6:                 2.4                         26           1.9
+#>  7:                 1.9                         26           1.7
+#>  8:                 2.4                         26           1.5
+#>  9:                 1.7                         26           0.9
+#> 10:                 1.0                         26           1.0
+#> 11:                 1.9                         26           1.9
+#> 12:                 2.0                         26           1.8
+#> 13:                 2.4                         26           1.8
+#> 14:                 1.4                         26           1.4
+#> 15:                 1.2                         26           1.2
+#> 16:                 1.9                         26           1.4
+#> 17:                 1.5                         26           1.3
+#> 18:                 2.3                         26           1.7
+#> 19:                 2.8                         26           1.7
+#> 20:                 0.9                         26           0.9
+#>     et_morton_wet_source et_short_crop et_short_crop_source et_tall_crop
+#>                    <int>         <num>                <int>        <num>
+#>  1:                   26           1.0                   26          1.2
+#>  2:                   26           1.4                   26          1.8
+#>  3:                   26           1.7                   26          2.3
+#>  4:                   26           1.9                   26          2.7
+#>  5:                   26           1.9                   26          2.6
+#>  6:                   26           1.8                   26          2.4
+#>  7:                   26           1.3                   26          1.7
+#>  8:                   26           1.7                   26          2.4
+#>  9:                   26           2.0                   26          3.1
+#> 10:                   26           0.7                   26          0.7
+#> 11:                   26           1.3                   26          1.6
+#> 12:                   26           1.4                   26          1.8
+#> 13:                   26           1.6                   26          2.3
+#> 14:                   26           1.1                   26          1.3
+#> 15:                   26           1.1                   26          1.4
+#> 16:                   26           1.4                   26          2.0
+#> 17:                   26           1.2                   26          1.6
+#> 18:                   26           1.5                   26          2.1
+#> 19:                   26           1.8                   26          2.6
+#> 20:                   26           0.8                   26          1.0
+#>     et_tall_crop_source evap_comb evap_comb_source evap_morton_lake
+#>                   <int>     <num>            <int>            <num>
+#>  1:                  26       1.7               25              1.0
+#>  2:                  26       1.3               25              1.8
+#>  3:                  26       1.6               25              1.9
+#>  4:                  26       1.9               25              1.9
+#>  5:                  26       2.4               25              1.9
+#>  6:                  26       1.4               25              1.9
+#>  7:                  26       2.6               25              1.7
+#>  8:                  26       3.4               25              1.5
+#>  9:                  26       2.2               25              1.0
+#> 10:                  26       1.0               25              0.9
+#> 11:                  26       1.2               25              1.9
+#> 12:                  26       1.6               25              1.8
+#> 13:                  26       2.3               25              1.8
+#> 14:                  26       2.5               25              1.4
+#> 15:                  26       1.3               25              1.2
+#> 16:                  26       1.8               25              1.4
+#> 17:                  26       2.5               25              1.3
+#> 18:                  26       1.9               25              1.7
+#> 19:                  26       1.6               25              1.7
+#> 20:                  26       1.6               25              0.9
+#>     evap_morton_lake_source evap_pan evap_pan_source evap_syn evap_syn_source
+#>                       <int>    <num>           <int>    <num>           <int>
+#>  1:                      26      1.7              25      1.7              26
+#>  2:                      26      1.3              25      2.0              26
+#>  3:                      26      1.6              25      2.2              26
+#>  4:                      26      1.9              25      2.5              26
+#>  5:                      26      2.4              25      2.4              26
+#>  6:                      26      1.4              25      2.4              26
+#>  7:                      26      2.6              25      2.0              26
+#>  8:                      26      3.4              25      2.2              26
+#>  9:                      26      2.2              25      2.5              26
+#> 10:                      26      1.0              25      1.5              26
+#> 11:                      26      1.2              25      1.9              26
+#> 12:                      26      1.6              25      1.9              26
+#> 13:                      26      2.3              25      2.2              26
+#> 14:                      26      2.5              25      1.8              26
+#> 15:                      26      1.3              25      1.8              26
+#> 16:                      26      1.8              25      2.1              26
+#> 17:                      26      2.5              25      1.9              26
+#> 18:                      26      1.9              25      2.2              26
+#> 19:                      26      1.6              25      2.3              26
+#> 20:                      26      1.6              25      1.6              26
+#>      extracted latitude longitude   mslp mslp_source radiation radiation_source
+#>         <Date>    <num>     <num>  <num>       <int>     <num>            <int>
+#>  1: 2026-02-05 -30.8917  116.7186 1022.6           0       8.9               42
+#>  2: 2026-02-05 -30.8917  116.7186 1026.5           0      12.4               42
+#>  3: 2026-02-05 -30.8917  116.7186 1028.6           0      12.5               42
+#>  4: 2026-02-05 -30.8917  116.7186 1027.2           0      12.7               42
+#>  5: 2026-02-05 -30.8917  116.7186 1023.8           0      12.6               42
+#>  6: 2026-02-05 -30.8917  116.7186 1020.1           0      12.6               42
+#>  7: 2026-02-05 -30.8917  116.7186 1027.6          25      12.3               42
+#>  8: 2026-02-05 -30.8917  116.7186 1026.9           0      11.0               42
+#>  9: 2026-02-05 -30.8917  116.7186 1015.0           0       7.1               42
+#> 10: 2026-02-05 -30.8917  116.7186 1010.2           0       6.8               42
+#> 11: 2026-02-05 -30.8917  116.7186 1013.8           0      12.0               42
+#> 12: 2026-02-05 -30.8917  116.7186 1014.6           0      11.3               42
+#> 13: 2026-02-05 -30.8917  116.7186 1019.5           0      12.0               42
+#> 14: 2026-02-05 -30.8917  116.7186 1018.0           0       9.4               42
+#> 15: 2026-02-05 -30.8917  116.7186 1021.5           0       9.2               42
+#> 16: 2026-02-05 -30.8917  116.7186 1026.8           0      10.3               42
+#> 17: 2026-02-05 -30.8917  116.7186 1031.7           0       9.9               42
+#> 18: 2026-02-05 -30.8917  116.7186 1030.1           0      12.3               42
+#> 19: 2026-02-05 -30.8917  116.7186 1024.9           0      12.2               42
+#> 20: 2026-02-05 -30.8917  116.7186 1016.4           0       4.6               42
+#>     rainfall rainfall_source rh_tmax rh_tmax_source rh_tmin rh_tmin_source    vp
+#>        <num>           <int>   <num>          <int>   <num>          <int> <num>
+#>  1:      0.0               0    68.1             26   100.0             26  11.6
+#>  2:      0.0               0    57.9             26   100.0             26  11.5
+#>  3:      0.0               0    50.9             26   100.0             26  10.9
+#>  4:      0.0               0    44.9             26   100.0             26  10.7
+#>  5:      0.0               0    45.6             26   100.0             26  11.0
+#>  6:      0.0               0    48.1             26   100.0             26  11.6
+#>  7:      0.0               0    59.6             26   100.0             26  10.7
+#>  8:      0.0               0    47.0             26   100.0             26   8.7
+#>  9:      0.0               0    39.3             26    80.8             26   8.2
+#> 10:      1.2               0    81.5             26   100.0             26  16.7
+#> 11:      3.4               0    68.1             26   100.0             26  14.5
+#> 12:      2.4               0    67.7             26   100.0             26  14.4
+#> 13:      0.2               0    52.2             26   100.0             26  11.6
+#> 14:      0.4               0    70.6             26   100.0             26  14.3
+#> 15:      0.0               0    63.5             26   100.0             26  10.9
+#> 16:      0.2               0    53.9             26   100.0             26  10.7
+#> 17:      0.0               0    58.9             26   100.0             26  10.7
+#> 18:      0.0               0    49.7             26   100.0             26   9.8
+#> 19:      0.0               0    43.5             26   100.0             26   8.8
+#> 20:      0.0               0    73.0             26   100.0             26  10.3
+#>     vp_deficit vp_deficit_source vp_source
+#>          <num>             <int>     <int>
+#>  1:        3.0                26         0
+#>  2:        4.8                26         0
+#>  3:        6.6                26         0
+#>  4:        8.0                26         0
+#>  5:        7.8                26         0
+#>  6:        7.2                26         0
+#>  7:        4.5                26        25
+#>  8:        6.7                26         0
+#>  9:        9.3                26         0
+#> 10:        1.4                26         0
+#> 11:        4.1                26         0
+#> 12:        4.6                26         0
+#> 13:        6.7                26         0
+#> 14:        3.5                26         0
+#> 15:        3.7                26         0
+#> 16:        5.6                26         0
+#> 17:        4.5                26         0
+#> 18:        6.0                26         0
+#> 19:        7.3                26         0
+#> 20:        2.5                26         0
+#>  [ reached getOption("max.print") -- omitted 12 rows ]
+```
+
+## Working With SILO Metadata
+
+Two functions are provided to assist in fetching metadata about the
+stations. \*
+[`find_nearby_stations()`](https://docs.ropensci.org/weatherOz/reference/find_nearby_stations.md),
+which returns a `data.table` with the nearest weather stations to a
+given geographic point or known station either in the DPIRD or BOM (from
+SILO) networks. \*
+[`get_stations_metadata()`](https://docs.ropensci.org/weatherOz/reference/get_stations_metadata.md),
+which returns a `data.table` with the latest and most up-to-date
+information available from the Weather 2.0 API on the stations’
+geographic locations, hardware details, *e.g.,* wind mast height, and
+recording capabilities.
+
+### Finding Nearby Stations
+
+Functions for searching metadata in the SILO network do not require an
+API key except where you may also interact with the DPIRD API.
+
+### Example 5: Finding Stations Nearby a Known Station
+
+Query stations and return BOM’s stations nearest to the DPIRD Northam,
+WA station, “NO”, returning stations with 50 km of this station. This
+requires a DPIRD API key as we’re using that station as the starting
+point.
+
+``` r
+
+library(weatherOz)
+
+(
+  wa_stn <- find_nearby_stations(
+    station_code = "010111",
+    distance_km = 50,
+    which_api = "silo"
+  )
+)
+#>     station_code     station_name longitude latitude  state elev_m  owner
+#>           <fctr>           <char>     <num>    <num> <char>  <num> <char>
+#>  1:       010111          Northam  116.6586 -31.6508     WA    170    BOM
+#>  2:       010152 Muresk Institute  116.6833 -31.7500     WA    166    BOM
+#>  3:       010150     Grass Valley  116.7969 -31.6358     WA    200    BOM
+#>  4:       010125          Toodyay  116.4703 -31.5517     WA    140    BOM
+#>  5:       010244      Bakers Hill  116.4561 -31.7469     WA    330    BOM
+#>  6:       010115      Quellington  116.8647 -31.7714     WA    220    BOM
+#>  7:       010311             York  116.7650 -31.8997     WA    179    BOM
+#>  8:       010023   Warradong Farm  116.9411 -31.5003     WA    240    BOM
+#>  9:       010091        Meckering  117.0081 -31.6322     WA    195    BOM
+#> 10:       010138         Wooroloo  116.3413 -31.8150     WA    277    BOM
+#> 11:       010134        Wattening  116.5150 -31.3119     WA    240    BOM
+#> 12:       010058       Goomalling  116.8269 -31.2994     WA    239    BOM
+#> 13:       010009          Bolgart  116.5092 -31.2744     WA    240    BOM
+#> 14:       010165      Green Hills  116.9839 -31.9408     WA    244    BOM
+#> 15:       009007          Chidlow  116.2658 -31.8622     WA    300    BOM
+#> 16:       009066      Gidgegannup  116.1976 -31.7906     WA    290    BOM
+#> 17:       010163           Jaroma  117.1433 -31.7706     WA    265    BOM
+#> 18:       010160      Quella Park  117.1194 -31.4533     WA    265    BOM
+#> 19:       010120     Doodenanning  117.0986 -31.9092     WA    290    BOM
+#> 20:       010795    Avondale Farm  116.8678 -32.1178     WA    200    BOM
+#> 21:       010515         Beverley  116.9247 -32.1083     WA    199    BOM
+#> 22:       009031   Mundaring Weir  116.1642 -31.9564     WA    190    BOM
+#> 23:       010042          Dowerin  117.0311 -31.1936     WA    273    BOM
+#> 24:       010000      Amery Acres  117.0736 -31.1683     WA    340    BOM
+#>     station_code     station_name longitude latitude  state elev_m  owner
+#>           <fctr>           <char>     <num>    <num> <char>  <num> <char>
+#>     distance_km
+#>           <num>
+#>  1:         0.0
+#>  2:        10.2
+#>  3:        13.9
+#>  4:        21.3
+#>  5:        22.4
+#>  6:        23.9
+#>  7:        27.1
+#>  8:        32.0
+#>  9:        35.0
+#> 10:        35.7
+#> 11:        36.8
+#> 12:        39.0
+#> 13:        40.5
+#> 14:        43.6
+#> 15:        44.6
+#> 16:        48.2
+#> 17:        49.9
+#> 18:        50.1
+#> 19:        51.0
+#> 20:        51.2
+#> 21:        52.9
+#> 22:        58.1
+#> 23:        59.0
+#> 24:        63.6
+#>     distance_km
+#>           <num>
+```
+
+### Example 6: Finding Stations Nearby a Given Longitude and Latitude
+
+Using the longitude and latitude for Northam, WA, find only BOM stations
+within a 50km radius of this geographic point.
+
+``` r
+
+library(weatherOz)
+
+(
+  wa_stn_lonlat <- find_nearby_stations(
+    longitude = 116.6620,
+    latitude = -31.6540,
+    distance_km = 50,
+    which_api = "silo"
+  )
+)
+#>     station_code     station_name longitude latitude  state elev_m  owner
+#>           <fctr>           <char>     <num>    <num> <char>  <num> <char>
+#>  1:       010111          Northam  116.6586 -31.6508     WA    170    BOM
+#>  2:       010152 Muresk Institute  116.6833 -31.7500     WA    166    BOM
+#>  3:       010150     Grass Valley  116.7969 -31.6358     WA    200    BOM
+#>  4:       010125          Toodyay  116.4703 -31.5517     WA    140    BOM
+#>  5:       010244      Bakers Hill  116.4561 -31.7469     WA    330    BOM
+#>  6:       010115      Quellington  116.8647 -31.7714     WA    220    BOM
+#>  7:       010311             York  116.7650 -31.8997     WA    179    BOM
+#>  8:       010023   Warradong Farm  116.9411 -31.5003     WA    240    BOM
+#>  9:       010091        Meckering  117.0081 -31.6322     WA    195    BOM
+#> 10:       010138         Wooroloo  116.3413 -31.8150     WA    277    BOM
+#> 11:       010134        Wattening  116.5150 -31.3119     WA    240    BOM
+#> 12:       010058       Goomalling  116.8269 -31.2994     WA    239    BOM
+#> 13:       009007          Chidlow  116.2658 -31.8622     WA    300    BOM
+#> 14:       010165      Green Hills  116.9839 -31.9408     WA    244    BOM
+#> 15:       010009          Bolgart  116.5092 -31.2744     WA    240    BOM
+#> 16:       009066      Gidgegannup  116.1976 -31.7906     WA    290    BOM
+#> 17:       010163           Jaroma  117.1433 -31.7706     WA    265    BOM
+#> 18:       010160      Quella Park  117.1194 -31.4533     WA    265    BOM
+#>     distance_km
+#>           <num>
+#>  1:    0.479696
+#>  2:   10.861214
+#>  3:   12.927642
+#>  4:   21.421152
+#>  5:   22.045764
+#>  6:   23.192674
+#>  7:   28.998370
+#>  8:   31.477722
+#>  9:   32.848599
+#> 10:   35.213369
+#> 11:   40.506038
+#> 12:   42.409889
+#> 13:   44.029617
+#> 14:   44.066701
+#> 15:   44.620097
+#> 16:   46.470370
+#> 17:   47.331752
+#> 18:   48.742243
+```
+
+### Example 7: Finding Stations in Both the DPIRD and SILO Data Sets
+
+Query stations nearest BOM’s Northam, WA station, “010111” and return
+both DPIRD and SILO/BOM stations within 50 km of this station. Note the
+use of an API key for the DPIRD network and that `which_api` is set to
+“all”.
+
+``` r
+
+library(weatherOz)
+
+(
+  wa_stn_all <- find_nearby_stations(
+    station_code = "010111",
+    distance_km = 50,
+    which_api = "all"
+  )
+)
+#>     station_code             station_name longitude  latitude  state elev_m
+#>           <fctr>                   <char>     <num>     <num> <char>  <num>
+#>  1:       010111                  Northam  116.6586 -31.65080     WA    170
+#>  2:           NO                  Northam  116.6942 -31.65161     WA    163
+#>  3:           MK                   Muresk  116.6913 -31.72772     WA    251
+#>  4:       010152         Muresk Institute  116.6833 -31.75000     WA    166
+#>  5:       010150             Grass Valley  116.7969 -31.63580     WA    200
+#>  6:       010125                  Toodyay  116.4703 -31.55170     WA    140
+#>  7:       010244              Bakers Hill  116.4561 -31.74690     WA    330
+#>  8:       010115              Quellington  116.8647 -31.77140     WA    220
+#>  9:       010311                     York  116.7650 -31.89970     WA    179
+#> 10:         BTSB       DFES-B Talbot West  116.6898 -31.96060     WA    356
+#> 11:       010023           Warradong Farm  116.9411 -31.50030     WA    240
+#> 12:        YE001                York East  116.9211 -31.83588     WA    229
+#> 13:         ROGR Morangup (Rolling Green)  116.3184 -31.69527     WA    315
+#> 14:       010091                Meckering  117.0081 -31.63220     WA    195
+#> 15:       010138                 Wooroloo  116.3413 -31.81500     WA    277
+#> 16:       010134                Wattening  116.5150 -31.31190     WA    240
+#> 17:       010058               Goomalling  116.8269 -31.29940     WA    239
+#> 18:       010009                  Bolgart  116.5092 -31.27440     WA    240
+#> 19:       010165              Green Hills  116.9839 -31.94080     WA    244
+#> 20:       009007                  Chidlow  116.2658 -31.86220     WA    300
+#> 21:       009066              Gidgegannup  116.1976 -31.79060     WA    290
+#> 22:       010163                   Jaroma  117.1433 -31.77060     WA    265
+#> 23:       010160              Quella Park  117.1194 -31.45330     WA    265
+#> 24:       010120             Doodenanning  117.0986 -31.90920     WA    290
+#> 25:       010795            Avondale Farm  116.8678 -32.11780     WA    200
+#> 26:       010515                 Beverley  116.9247 -32.10830     WA    199
+#> 27:       009031           Mundaring Weir  116.1642 -31.95640     WA    190
+#> 28:       010042                  Dowerin  117.0311 -31.19360     WA    273
+#> 29:       010000              Amery Acres  117.0736 -31.16830     WA    340
+#>     station_code             station_name longitude  latitude  state elev_m
+#>           <fctr>                   <char>     <num>     <num> <char>  <num>
+#>                                                                    owner
+#>                                                                   <char>
+#>  1:                                                                  BOM
+#>  2: WA Department of Primary Industries and Regional Development (DPIRD)
+#>  3: WA Department of Primary Industries and Regional Development (DPIRD)
+#>  4:                                                                  BOM
+#>  5:                                                                  BOM
+#>  6:                                                                  BOM
+#>  7:                                                                  BOM
+#>  8:                                                                  BOM
+#>  9:                                                                  BOM
+#> 10:                  WA Department of Fire and Emergency Services (DFES)
+#> 11:                                                                  BOM
+#> 12: WA Department of Primary Industries and Regional Development (DPIRD)
+#> 13:   WA Department of Biodiversity, Conservation and Attractions (DBCA)
+#> 14:                                                                  BOM
+#> 15:                                                                  BOM
+#> 16:                                                                  BOM
+#> 17:                                                                  BOM
+#> 18:                                                                  BOM
+#> 19:                                                                  BOM
+#> 20:                                                                  BOM
+#> 21:                                                                  BOM
+#> 22:                                                                  BOM
+#> 23:                                                                  BOM
+#> 24:                                                                  BOM
+#> 25:                                                                  BOM
+#> 26:                                                                  BOM
+#> 27:                                                                  BOM
+#> 28:                                                                  BOM
+#> 29:                                                                  BOM
+#>                                                                    owner
+#>                                                                   <char>
+#>     distance_km
+#>           <num>
+#>  1:        0.00
+#>  2:        3.56
+#>  3:        8.36
+#>  4:       10.20
+#>  5:       13.90
+#>  6:       21.30
+#>  7:       22.40
+#>  8:       23.90
+#>  9:       27.10
+#> 10:       31.14
+#> 11:       32.00
+#> 12:       32.12
+#> 13:       34.31
+#> 14:       35.00
+#> 15:       35.70
+#> 16:       36.80
+#> 17:       39.00
+#> 18:       40.50
+#> 19:       43.60
+#> 20:       44.60
+#> 21:       48.20
+#> 22:       49.90
+#> 23:       50.10
+#> 24:       51.00
+#> 25:       51.20
+#> 26:       52.90
+#> 27:       58.10
+#> 28:       59.00
+#> 29:       63.60
+#>     distance_km
+#>           <num>
+```
+
+### Example 8: Finding Stations in a Bounding Box for Melbourne
+
+Using a (generous) bounding box for Melbourne, VIC using only the SILO
+API for BOM stations, no API key is needed.
+
+``` r
+
+bbox <- find_stations_in(
+  x = c(144.470215, -38.160476, 145.612793, -37.622934),
+  which_api = "SILO",
+  include_closed = TRUE
+)
+bbox
+#>      station_code                          station_name      start        end
+#>            <fctr>                                <char>     <Date>     <Date>
+#>   1:       087131 Altona City Offices Operations Centre 1967-01-01 2026-02-05
+#>   2:       086147                       Aspendale Csiro 1954-01-01 1985-01-01
+#>   3:       087113                        Avalon Airport 1965-01-01 2026-02-05
+#>   4:       086002                          Balwyn North 1922-01-01 1969-01-01
+#>   5:       086029                        Beaconsfield 2 1926-01-01 1975-01-01
+#>  ---                                                                         
+#> 106:       087066                  Werribee Post Office 1901-01-01 1966-01-01
+#> 107:       087150                   Werribee Racecourse 1958-01-01 2026-02-05
+#> 108:       087065                Werribee Research Farm 1913-01-01 1980-01-01
+#> 109:       086129                         Woori Yallock 1901-01-01 1986-01-01
+#> 110:       086132                Yarra River Yarra Glen 1890-01-01 1974-01-01
+#>      latitude longitude  state elev_m                      source status   wmo
+#>         <num>     <num> <char>  <num>                      <char> <char> <num>
+#>   1: -37.8634  144.8262    VIC    3.0 Bureau of Meteorology (BOM)   open    NA
+#>   2: -38.0333  145.1000    VIC    5.0 Bureau of Meteorology (BOM) closed    NA
+#>   3: -38.0288  144.4783    VIC   10.6 Bureau of Meteorology (BOM)   open 94854
+#>   4: -37.8000  145.0500    VIC     NA Bureau of Meteorology (BOM) closed    NA
+#>   5: -38.0000  145.4167    VIC  213.4 Bureau of Meteorology (BOM) closed    NA
+#>  ---                                                                          
+#> 106: -37.9000  144.6667    VIC   23.5 Bureau of Meteorology (BOM) closed    NA
+#> 107: -37.9043  144.6427    VIC   20.0 Bureau of Meteorology (BOM)   open    NA
+#> 108: -37.9000  144.6833    VIC   24.0 Bureau of Meteorology (BOM) closed    NA
+#> 109: -37.8000  145.5167    VIC   99.0 Bureau of Meteorology (BOM) closed    NA
+#> 110: -37.6647  145.3761    VIC   88.0 Bureau of Meteorology (BOM) closed    NA
+```
+
+### Example 9: Finding the Station Nearest the Centroid of a Bounding Box
+
+Using the same bounding box but only find a single open station nearest
+the centroid of the bounding box. This will return a single value in
+this case as there is only one polygon. For queries where the polygon
+has ‘n’ parts, ‘n’ results will be returned.
+
+``` r
+
+centroid <- find_stations_in(
+  x = c(144.470215, -38.160476, 145.612793, -37.622934),
+  which_api = "SILO",
+  include_closed = FALSE,
+  centroid = TRUE
+)
+centroid
+#>    station_code         station_name      start        end latitude longitude
+#>          <fctr>               <char>     <Date>     <Date>    <num>     <num>
+#> 1:       086018 Caulfield Racecourse 1887-01-01 2026-02-05 -37.8795  145.0368
+#>     state elev_m                      source status   wmo
+#>    <char>  <num>                      <char> <char> <num>
+#> 1:    VIC   48.8 Bureau of Meteorology (BOM)   open    NA
+```
+
+### Getting Station Metadata for the SILO Network Stations
+
+The
+[`get_stations_metadata()`](https://docs.ropensci.org/weatherOz/reference/get_stations_metadata.md)
+function is shared with the DPIRD functions as well, so this function
+will retrieve data from both weather APIs. Shown here is how to use it
+for SILO data only.
+
+### Example 10: Get SILO Station Metadata
+
+The
+[`get_stations_metadata()`](https://docs.ropensci.org/weatherOz/reference/get_stations_metadata.md)
+function allows you to get details about the stations themselves for
+stations in the DPIRD and SILO (BOM) networks in one function. Here we
+demonstrate how to get the metadata for the SILO stations only.
+
+``` r
+
+library(weatherOz)
+
+(metadata <- get_stations_metadata(which_api = "silo"))
+#>       station_code                     station_name      start        end latitude
+#>             <fctr>                           <char>     <Date>     <Date>    <num>
+#>    1:       061065                Aberdeen Rossgole 1926-01-01 2026-02-05 -32.1402
+#>    2:       071000    Adaminaby Alpine Tourist Park 1886-01-01 2026-02-05 -35.9962
+#>    3:       068000          Albion Park Post Office 1892-01-01 2026-02-05 -34.5712
+#>    4:       068241 Albion Park Shellharbour Airport 1999-01-01 2026-02-05 -34.5639
+#>    5:       072146                   Albury Airport 1973-01-01 2026-02-05 -36.0663
+#>   ---                                                                             
+#> 3570:       008146                         Ytiniche 1913-01-01 2026-02-05 -30.0706
+#> 3571:       007096                             Yuin 1898-01-01 2026-02-05 -27.9808
+#> 3572:       012092                         Yuinmery 1921-01-01 2026-02-05 -28.5606
+#> 3573:       002030                           Yulmbu 1950-01-01 2026-02-05 -17.2986
+#> 3574:       008147                             Yuna 1909-01-01 2026-02-05 -28.3250
+#>       longitude  state elev_m                      source status   wmo
+#>           <num> <char>  <num>                      <char> <char> <num>
+#>    1:  150.7285    NSW    543 Bureau of Meteorology (BOM)   open    NA
+#>    2:  148.7693    NSW   1015 Bureau of Meteorology (BOM)   open    NA
+#>    3:  150.7761    NSW      8 Bureau of Meteorology (BOM)   open    NA
+#>    4:  150.7924    NSW      8 Bureau of Meteorology (BOM)   open 95748
+#>    5:  146.9530    NSW    165 Bureau of Meteorology (BOM)   open    NA
+#>   ---                                                                 
+#> 3570:  116.2092     WA    300 Bureau of Meteorology (BOM)   open    NA
+#> 3571:  116.0347     WA    300 Bureau of Meteorology (BOM)   open    NA
+#> 3572:  119.0161     WA    500 Bureau of Meteorology (BOM)   open    NA
+#> 3573:  126.9158     WA    450 Bureau of Meteorology (BOM)   open    NA
+#> 3574:  114.9589     WA    270 Bureau of Meteorology (BOM)   open    NA
+```
+
+### Using Metadata to Get Weather Data for a Whole State
+
+Using the metadata, we can get all weather data from stations in a
+single state like so.
+
+``` r
+
+library(weatherOz)
+library(data.table)
+#> data.table 1.18.0 using 7 threads (see ?getDTthreads).  Latest news: r-datatable.com
+#> 
+#> Attaching package: 'data.table'
+#> 
+#> The following objects are masked from 'package:dplyr':
+#> 
+#>     between, first, last
+
+metadata <- get_stations_metadata(which_api = "silo")
+
+# Subset to the required state
+metadata_wa <- subset(metadata, state == "WA")
+
+# Select first 10 to demo
+first_ten <- as.list(as.character(metadata_wa$station_code))[1:10]
+
+# Loop through each station_code and give proper names
+# We've wrapped it in `suppressMessages()` to keep the output a bit quieter
+# as most of the data have interpolated values in them that will repeat for
+# every set.
+
+suppressMessages(
+  x <-
+    lapply(
+      X = first_ten,
+      FUN = get_patched_point,
+      start_date = "20001201",
+      end_date = "20001205",
+      values = "all"
+    )
+)
+
+names(x) <- unlist(first_ten)
+
+# Create dataset with station_code column id
+rbindlist(x, idcol = "station_code")
+#>     station_code station_code station_name  year month   day       date air_tmax
+#>           <char>       <fctr>       <char> <num> <num> <int>     <Date>    <num>
+#>  1:       009804       009804        Adina  2000    12     1 2000-12-01     35.1
+#>  2:       009804       009804        Adina  2000    12     2 2000-12-02     21.0
+#>  3:       009804       009804        Adina  2000    12     3 2000-12-03     26.5
+#>  4:       009804       009804        Adina  2000    12     4 2000-12-04     23.0
+#>  5:       009804       009804        Adina  2000    12     5 2000-12-05     23.5
+#>  6:       008000       008000        Ajana  2000    12     1 2000-12-01     32.6
+#>  7:       008000       008000        Ajana  2000    12     2 2000-12-02     30.4
+#>  8:       008000       008000        Ajana  2000    12     3 2000-12-03     35.6
+#>  9:       008000       008000        Ajana  2000    12     4 2000-12-04     33.0
+#> 10:       008000       008000        Ajana  2000    12     5 2000-12-05     33.4
+#> 11:       009500       009500       Albany  2000    12     1 2000-12-01     24.3
+#> 12:       009500       009500       Albany  2000    12     2 2000-12-02     19.8
+#> 13:       009500       009500       Albany  2000    12     3 2000-12-03     28.9
+#> 14:       009500       009500       Albany  2000    12     4 2000-12-04     18.0
+#> 15:       009500       009500       Albany  2000    12     5 2000-12-05     21.3
+#> 16:       012001       012001 Albion Downs  2000    12     1 2000-12-01     39.3
+#> 17:       012001       012001 Albion Downs  2000    12     2 2000-12-02     35.3
+#> 18:       012001       012001 Albion Downs  2000    12     3 2000-12-03     35.3
+#> 19:       012001       012001 Albion Downs  2000    12     4 2000-12-04     40.2
+#> 20:       012001       012001 Albion Downs  2000    12     5 2000-12-05     42.1
+#>     air_tmax_source air_tmin air_tmin_source  elev_m et_morton_actual
+#>               <int>    <num>           <int>  <char>            <num>
+#>  1:              25     11.5              25  60.0 m              3.3
+#>  2:              25     15.3              25  60.0 m              5.5
+#>  3:              25      8.5              25  60.0 m              4.8
+#>  4:              25     13.0              25  60.0 m              5.6
+#>  5:              25     15.2              25  60.0 m              3.9
+#>  6:              25     14.6              25 210.0 m              4.3
+#>  7:              25     15.6              25 210.0 m              2.7
+#>  8:              25     16.0              25 210.0 m              1.4
+#>  9:              25     16.8              25 210.0 m              1.9
+#> 10:              25     17.0              25 210.0 m              0.7
+#> 11:              25      8.5              25   3.0 m              7.0
+#> 12:              25     12.0              25   3.0 m              5.0
+#> 13:              25      8.6              25   3.0 m              5.5
+#> 14:              25     12.5              25   3.0 m              3.2
+#> 15:              25     13.4              25   3.0 m              3.4
+#> 16:              25     22.0              25 500.0 m              0.8
+#> 17:              25     21.9              25 500.0 m              1.1
+#> 18:              25     20.1              25 500.0 m              0.6
+#> 19:              25     22.9              25 500.0 m              0.2
+#> 20:              25     20.5              25 500.0 m              0.0
+#>     et_morton_actual_source et_morton_potential et_morton_potential_source
+#>                       <int>               <num>                      <int>
+#>  1:                      26                11.2                         26
+#>  2:                      26                 8.9                         26
+#>  3:                      26                 9.4                         26
+#>  4:                      26                 6.8                         26
+#>  5:                      26                 7.6                         26
+#>  6:                      26                 9.6                         26
+#>  7:                      26                10.9                         26
+#>  8:                      26                12.6                         26
+#>  9:                      26                11.7                         26
+#> 10:                      26                 8.4                         26
+#> 11:                      26                 7.7                         26
+#> 12:                      26                 7.2                         26
+#> 13:                      26                 9.3                         26
+#> 14:                      26                 3.2                         26
+#> 15:                      26                 6.9                         26
+#> 16:                      26                14.3                         26
+#> 17:                      26                13.6                         26
+#> 18:                      26                13.9                         26
+#> 19:                      26                15.4                         26
+#> 20:                      26                14.4                         26
+#>     et_morton_wet et_morton_wet_source et_short_crop et_short_crop_source
+#>             <num>                <int>         <num>                <int>
+#>  1:           7.3                   26           7.7                   26
+#>  2:           7.2                   26           5.7                   26
+#>  3:           7.1                   26           6.3                   26
+#>  4:           6.2                   26           4.9                   26
+#>  5:           5.7                   26           5.1                   26
+#>  6:           7.0                   26           7.2                   26
+#>  7:           6.8                   26           7.4                   26
+#>  8:           7.0                   26           8.2                   26
+#>  9:           6.8                   26           7.7                   26
+#> 10:           4.5                   26           5.9                   26
+#> 11:           7.3                   26           5.5                   26
+#> 12:           6.1                   26           4.9                   26
+#> 13:           7.4                   26           6.6                   26
+#> 14:           3.2                   26           2.2                   26
+#> 15:           5.1                   26           4.7                   26
+#> 16:           7.5                   26           8.8                   26
+#> 17:           7.4                   26           8.3                   26
+#> 18:           7.2                   26           8.4                   26
+#> 19:           7.8                   26           9.1                   26
+#> 20:           7.2                   26           9.1                   26
+#>     et_tall_crop et_tall_crop_source evap_comb evap_comb_source evap_morton_lake
+#>            <num>               <int>     <num>            <int>            <num>
+#>  1:         10.2                  26      10.0               25              7.5
+#>  2:          6.9                  26       7.4               25              7.4
+#>  3:          8.1                  26       6.6               25              7.3
+#>  4:          5.7                  26       8.7               25              6.4
+#>  5:          6.3                  26       7.7               25              5.9
+#>  6:          9.0                  26      10.8               25              8.2
+#>  7:          9.5                  26      11.4               25              8.0
+#>  8:         11.0                  26      10.7               25              8.2
+#>  9:         10.1                  26      10.0               25              8.0
+#> 10:          7.9                  26       9.7               25              5.2
+#> 11:          6.5                  26       8.0               25              7.6
+#> 12:          5.8                  26       6.0               25              6.3
+#> 13:          8.3                  26       6.7               25              7.6
+#> 14:          2.4                  26       5.1               25              3.2
+#> 15:          5.8                  26       7.4               25              5.3
+#> 16:         11.7                  26      14.3               25              8.7
+#> 17:         10.9                  26      15.4               25              8.6
+#> 18:         11.2                  26      13.6               25              8.5
+#> 19:         12.2                  26      14.0               25              9.0
+#> 20:         12.7                  26      14.9               25              8.4
+#>     evap_morton_lake_source evap_pan evap_pan_source evap_syn evap_syn_source
+#>                       <int>    <num>           <int>    <num>           <int>
+#>  1:                      26     10.0              25     10.0              26
+#>  2:                      26      7.4              25      7.7              26
+#>  3:                      26      6.6              25      8.6              26
+#>  4:                      26      8.7              25      7.0              26
+#>  5:                      26      7.7              25      7.0              26
+#>  6:                      26     10.8              25     10.6              26
+#>  7:                      26     11.4              25     10.8              26
+#>  8:                      26     10.7              25     12.2              26
+#>  9:                      26     10.0              25     11.3              26
+#> 10:                      26      9.7              25      9.4              26
+#> 11:                      26      8.0              25      7.5              26
+#> 12:                      26      6.0              25      6.5              26
+#> 13:                      26      6.7              25      8.4              26
+#> 14:                      26      5.1              25      3.4              26
+#> 15:                      26      7.4              25      6.0              26
+#> 16:                      26     14.3              25     15.3              26
+#> 17:                      26     15.4              25     14.3              26
+#> 18:                      26     13.6              25     14.5              26
+#> 19:                      26     14.0              25     16.0              26
+#> 20:                      26     14.9              25     16.6              26
+#>      extracted latitude longitude   mslp mslp_source radiation radiation_source
+#>         <Date>    <num>     <num>  <num>       <int>     <num>            <int>
+#>  1: 2026-02-05 -33.8811  122.2167 1014.7          25      30.9               42
+#>  2: 2026-02-05 -33.8811  122.2167 1018.0          25      32.6               42
+#>  3: 2026-02-05 -33.8811  122.2167 1020.4          25      33.1               42
+#>  4: 2026-02-05 -33.8811  122.2167 1016.8          25      28.2               42
+#>  5: 2026-02-05 -33.8811  122.2167 1021.4          25      25.8               42
+#>  6: 2026-02-05 -27.9607  114.6336 1009.4          25      32.4               42
+#>  7: 2026-02-05 -27.9607  114.6336 1015.9          25      33.1               42
+#>  8: 2026-02-05 -27.9607  114.6336 1012.8          25      32.7               42
+#>  9: 2026-02-05 -27.9607  114.6336 1010.5          25      32.3               42
+#> 10: 2026-02-05 -27.9607  114.6336 1009.5          25      19.6               42
+#> 11: 2026-02-05 -35.0289  117.8808 1012.7          25      33.5               42
+#> 12: 2026-02-05 -35.0289  117.8808 1020.1          25      29.3               42
+#> 13: 2026-02-05 -35.0289  117.8808 1019.1          25      33.2               42
+#> 14: 2026-02-05 -35.0289  117.8808 1018.7          25      12.7               42
+#> 15: 2026-02-05 -35.0289  117.8808 1020.4          25      24.3               42
+#> 16: 2026-02-05 -27.2878  120.3919 1010.7          25      31.9               42
+#> 17: 2026-02-05 -27.2878  120.3919 1009.3          25      32.5               42
+#> 18: 2026-02-05 -27.2878  120.3919 1014.0          25      32.9               42
+#> 19: 2026-02-05 -27.2878  120.3919 1009.3          25      32.8               42
+#> 20: 2026-02-05 -27.2878  120.3919 1008.9          25      31.2               42
+#>     rainfall rainfall_source rh_tmax rh_tmax_source rh_tmin rh_tmin_source    vp
+#>        <num>           <int>   <num>          <int>   <num>          <int> <num>
+#>  1:      0.0               0    18.6             26    77.4             26  10.5
+#>  2:      0.2               0    44.3             26    63.3             26  11.0
+#>  3:      0.0               0    25.7             26    80.2             26   8.9
+#>  4:      0.0               0    50.9             26    95.5             26  14.3
+#>  5:      0.0               0    43.9             26    73.6             26  12.7
+#>  6:      0.0               0    29.7             26    87.9             26  14.6
+#>  7:      0.0               0    22.8             26    55.9             26   9.9
+#>  8:      0.0               0    15.3             26    49.0             26   8.9
+#>  9:      0.0               0    19.7             26    51.8             26   9.9
+#> 10:      0.0               0    28.2             26    74.9             26  14.5
+#> 11:      0.0               0    41.5             26   100.0             26  12.6
+#> 12:      0.0               0    47.7             26    78.5             26  11.0
+#> 13:      0.0               0    27.6             26    98.5             26  11.0
+#> 14:      0.0               0    75.1             26   100.0             26  15.5
+#> 15:      0.0               0    44.2             26    72.9             26  11.2
+#> 16:      0.0               0    15.2             26    40.9             26  10.8
+#> 17:      0.0               0    17.3             26    37.7             26   9.9
+#> 18:      0.0               0    13.6             26    33.2             26   7.8
+#> 19:      0.0               0    12.5             26    33.3             26   9.3
+#> 20:      0.0               0     7.6             26    26.1             26   6.3
+#>     vp_deficit vp_deficit_source vp_source
+#>          <num>             <int>     <int>
+#>  1:       30.0                26        25
+#>  2:       11.8                26        25
+#>  3:       17.5                26        25
+#>  4:        9.8                26        25
+#>  5:       12.8                26        25
+#>  6:       23.4                26        25
+#>  7:       25.1                26        25
+#>  8:       35.3                26        25
+#>  9:       30.0                26        25
+#> 10:       26.3                26        25
+#> 11:       11.3                26        25
+#> 12:        9.4                26        25
+#> 13:       18.5                26        25
+#> 14:        3.4                26        25
+#> 15:       11.2                26        25
+#> 16:       45.4                26        25
+#> 17:       37.5                26        25
+#> 18:       38.4                26        25
+#> 19:       49.7                26        25
+#> 20:       55.4                26        25
+#>  [ reached getOption("max.print") -- omitted 32 rows ]
+```
+
+## References
+
+Allen, R. G. 1998. “Food and Agriculture Organization of the United
+Nations (Eds.) Crop Evapotranspiration: Guidelines for Computing Crop
+Water Requirements.” *Food and Agriculture Organization of the United
+Nations: Rome, Italy*.
+
+Jeffrey, Stephen J., John O. Carter, Keith B. Moodie, and Alan R.
+Beswick. 2001. “Using Spatial Interpolation to Construct a Comprehensive
+Archive of Australian Climate Data.” *Environmental Modelling &
+Software* 16 (4): 309–30.
+<https://doi.org/10.1016/s1364-8152(01)00008-1>.
+
+Morton, Fred I. 1983. “Operational Estimates of Areal Evapotranspiration
+and Their Significance to the Science and Practice of Hydrology.”
+*Journal of Hydrology* 66 (1-4): 1–76.
+
+Rayner, D. 2005. “Australian Synthetic Daily Class A Pan Evaporation.”
+*Queensland Department of Natural Resources and Mines*.
+
+Walter, Ivan A., Richard G. Allen, Ronald Elliott, et al. 2000. “ASCE’s
+Standardized Reference Evapotranspiration Equation.” In *Watershed
+Management and Operations Management 2000*.
+
+Zajaczkowski, Juliusz, Kenneth Wong, and John Carter. 2013. “Improved
+Historical Solar Radiation Gridded Data for Australia.” *Environmental
+Modelling & Software* 49 (November): 64–77.
+<https://doi.org/10.1016/j.envsoft.2013.06.013>.
